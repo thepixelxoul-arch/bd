@@ -13,6 +13,10 @@ const DEFAULT_SETTINGS={
 };
 
 const DEFAULT_SERVICES={
+  youtube:[
+    {id:301,name:'YouTube Views',rate:80,min:100,max:50000,desc:'Worldwide views • Gradual delivery'},
+    {id:302,name:'YouTube Likes',rate:55,min:50,max:10000,desc:'High quality likes'}
+  ],
   facebook:[
     {id:101,name:'Facebook Page Followers',rate:45,min:100,max:10000,desc:'Stable delivery • Refill supported'},
     {id:102,name:'Facebook Post Reactions',rate:30,min:50,max:5000,desc:'Mixed reactions • Fast start'}
@@ -21,13 +25,33 @@ const DEFAULT_SERVICES={
     {id:201,name:'Instagram Followers',rate:60,min:100,max:10000,desc:'Global followers • Medium speed'},
     {id:202,name:'Instagram Likes',rate:25,min:50,max:20000,desc:'Fast likes • No refill'}
   ],
-  youtube:[
-    {id:301,name:'YouTube Views',rate:80,min:100,max:50000,desc:'Worldwide views • Gradual delivery'},
-    {id:302,name:'YouTube Likes',rate:55,min:50,max:10000,desc:'High quality likes'}
-  ],
   tiktok:[
     {id:401,name:'TikTok Views',rate:18,min:100,max:100000,desc:'Very fast start'},
     {id:402,name:'TikTok Followers',rate:70,min:100,max:10000,desc:'Mixed global followers'}
+  ],
+  telegram:[
+    {id:501,name:'Telegram Channel Members',rate:65,min:100,max:20000,desc:'Channel members • Gradual delivery'}
+  ],
+  twitter:[
+    {id:601,name:'X (Twitter) Post Likes',rate:55,min:50,max:10000,desc:'Post engagement • Standard delivery'}
+  ],
+  linkedin:[
+    {id:701,name:'LinkedIn Post Reactions',rate:95,min:25,max:5000,desc:'Professional network engagement'}
+  ],
+  discord:[
+    {id:801,name:'Discord Server Members',rate:120,min:50,max:5000,desc:'Server members • Gradual delivery'}
+  ],
+  spotify:[
+    {id:901,name:'Spotify Plays',rate:35,min:500,max:100000,desc:'Track plays • Gradual delivery'}
+  ],
+  twitch:[
+    {id:1001,name:'Twitch Followers',rate:85,min:50,max:10000,desc:'Channel followers • Standard delivery'}
+  ],
+  soundcloud:[
+    {id:1101,name:'SoundCloud Plays',rate:30,min:500,max:100000,desc:'Track plays • Standard delivery'}
+  ],
+  webtraffic:[
+    {id:1201,name:'Website Traffic',rate:25,min:1000,max:100000,desc:'Website visits • Mixed sources'}
   ]
 };
 
@@ -242,15 +266,11 @@ if(serviceSearch)serviceSearch.addEventListener('input',()=>{
   document.querySelectorAll('#servicesTable tbody tr').forEach(row=>row.style.display=row.textContent.toLowerCase().includes(q)?'':'none')
 });
 
-function appendCustomServicesToTable(){
+function renderServicesTable(){
   const tbody=document.querySelector('#servicesTable tbody');if(!tbody)return;
-  getCustomServices().forEach(s=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+s.id+'</td><td>'+s.name+'</td><td>৳'+s.rate+'</td><td>'+s.min+'</td><td>'+s.max+'</td>';
-    tbody.appendChild(tr)
-  })
+  tbody.innerHTML=allServices().map(s=>'<tr><td>'+s.id+'</td><td>'+s.name+'</td><td>৳'+s.rate+'</td><td>'+s.min+'</td><td>'+s.max+'</td></tr>').join('')
 }
-appendCustomServicesToTable();
+renderServicesTable();
 
 document.addEventListener('DOMContentLoaded',()=>{
   const header=document.querySelector('.header');
