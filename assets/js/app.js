@@ -1,743 +1,159 @@
-const body=document.body;
-const sidebar=document.querySelector('.sidebar');
-const menuBtn=document.querySelector('[data-menu-toggle]');
-
-const DEFAULT_SETTINGS={
-  siteName:'Amar Shop',
-  announcement:'Fast, simple and reliable social media services.',
-  ordersEnabled:true,
-  registrationEnabled:true,
-  defaultBalance:500,
-  supportEmail:'support@example.com',
-  supportTelegram:'@amarshop',
-  maintenanceMode:false
-};
-
-const DEFAULT_SERVICES={
-  youtube:[
-    {id:301,name:'YouTube Views',rate:80,min:100,max:50000,desc:'Worldwide views • Gradual delivery'},
-    {id:302,name:'YouTube Likes',rate:55,min:50,max:10000,desc:'High quality likes'}
-  ],
-  facebook:[
-    {id:101,name:'Facebook Page Followers',rate:45,min:100,max:10000,desc:'Stable delivery • Refill supported'},
-    {id:102,name:'Facebook Post Reactions',rate:30,min:50,max:5000,desc:'Mixed reactions • Fast start'}
-  ],
-  instagram:[
-    {id:201,name:'Instagram Followers',rate:60,min:100,max:10000,desc:'Global followers • Medium speed'},
-    {id:202,name:'Instagram Likes',rate:25,min:50,max:20000,desc:'Fast likes • No refill'}
-  ],
-  tiktok:[
-    {id:401,name:'TikTok Views',rate:18,min:100,max:100000,desc:'Very fast start'},
-    {id:402,name:'TikTok Followers',rate:70,min:100,max:10000,desc:'Mixed global followers'}
-  ],
-  telegram:[
-    {id:501,name:'Telegram Channel Members',rate:65,min:100,max:20000,desc:'Channel members • Gradual delivery'}
-  ],
-  twitter:[
-    {id:601,name:'X (Twitter) Post Likes',rate:55,min:50,max:10000,desc:'Post engagement • Standard delivery'}
-  ],
-  linkedin:[
-    {id:701,name:'LinkedIn Post Reactions',rate:95,min:25,max:5000,desc:'Professional network engagement'}
-  ],
-  discord:[
-    {id:801,name:'Discord Server Members',rate:120,min:50,max:5000,desc:'Server members • Gradual delivery'}
-  ],
-  spotify:[
-    {id:901,name:'Spotify Plays',rate:35,min:500,max:100000,desc:'Track plays • Gradual delivery'}
-  ],
-  twitch:[
-    {id:1001,name:'Twitch Followers',rate:85,min:50,max:10000,desc:'Channel followers • Standard delivery'}
-  ],
-  soundcloud:[
-    {id:1101,name:'SoundCloud Plays',rate:30,min:500,max:100000,desc:'Track plays • Standard delivery'}
-  ],
-  webtraffic:[
-    {id:1201,name:'Website Traffic',rate:25,min:1000,max:100000,desc:'Website visits • Mixed sources'}
-  ]
-};
-
-function safeParse(key,fallback){
-  try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch(e){return fallback}
-}
-function getSettings(){return {...DEFAULT_SETTINGS,...safeParse('siteSettings',{})}}
-function saveSettings(v){localStorage.setItem('siteSettings',JSON.stringify({...getSettings(),...v}))}
-function getDemoProfile(){return safeParse('demoProfile',{})}
-function setDemoProfile(p){localStorage.setItem('demoProfile',JSON.stringify(p))}
-function demoOrders(){return safeParse('demoOrders',[])}
-function getCustomServices(){return safeParse('customServices',[])}
-function showToast(msg){
-  const el=document.createElement('div');el.className='toast';el.textContent=msg;
-  document.body.appendChild(el);setTimeout(()=>el.remove(),2200)
-}
-function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v}
-function allServices(){
-  const flat=[];
-  Object.entries(DEFAULT_SERVICES).forEach(([platform,list])=>list.forEach(s=>flat.push({...s,platform,custom:false})));
-  getCustomServices().forEach(s=>flat.push({...s,custom:true}));
-  return flat;
-}
-function servicesByPlatform(platform){return allServices().filter(s=>s.platform===platform)}
-
-localStorage.removeItem('theme');
-body.classList.remove('dark');
-document.querySelectorAll('[data-theme-toggle]').forEach(el=>el.remove());
-
-if(menuBtn)menuBtn.addEventListener('click',()=>sidebar&&sidebar.classList.toggle('open'));
-
-const settings=getSettings();
-document.querySelectorAll('.brand > div:last-child').forEach(el=>el.textContent=settings.siteName);
-document.querySelectorAll('.mobile-brand > span:last-child').forEach(el=>el.textContent=settings.siteName);
-document.title=document.title.replace(/Amar Shop/g,settings.siteName);
-
-const profile=getDemoProfile();
-document.querySelectorAll('[data-demo-username]').forEach(el=>{
-  if(el.matches('input,textarea'))el.value=profile.username||'customer';
-  else el.textContent=profile.username||'customer'
-});
-document.querySelectorAll('[data-demo-email]').forEach(el=>{
-  if(el.matches('input,textarea'))el.value=profile.email||'customer@example.com';
-  else el.textContent=profile.email||'customer@example.com'
-});
-document.querySelectorAll('[data-demo-balance]').forEach(el=>el.textContent='৳'+Number(profile.balance??settings.defaultBalance).toFixed(2));
-
-const cat=document.getElementById('category');
-const svc=document.getElementById('service');
-const qty=document.getElementById('quantity');
-const charge=document.getElementById('charge');
-
-function currentService(){
-  if(!svc)return null;
-  return allServices().find(s=>String(s.id)===String(svc.value))
-}
-function calcCharge(){
-  const s=currentService();if(!s||!qty||!charge)return;
-  const q=Number(qty.value||0);
-  charge.value=q?'৳'+((q/1000)*Number(s.rate)).toFixed(2):'৳0.00'
-}
-function updateInfo(){
-  const s=currentService();if(!s)return;
-  const map={
-    serviceName:s.id+' - '+s.name,
-    serviceStart:'0-30 minutes',
-    serviceSpeed:'Varies by service',
-    serviceRefill:String(s.desc).toLowerCase().includes('refill')?'Available':'N/A',
-    serviceQuality:'Standard',
-    serviceMinMax:s.min+' - '+s.max,
-    serviceDesc:s.desc||'Service available'
-  };
-  Object.entries(map).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v});
-  calcCharge()
-}
-function updateServices(){
-  if(!cat||!svc)return;
-  const list=servicesByPlatform(cat.value);
-  svc.innerHTML=list.map(s=>'<option value="'+s.id+'">'+s.id+' - '+s.name+'</option>').join('');
-  updateInfo()
-}
-if(cat)cat.addEventListener('change',updateServices);
-if(svc)svc.addEventListener('change',updateInfo);
-if(qty)qty.addEventListener('input',calcCharge);
-updateServices();
-
-document.querySelectorAll('.platform').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.platform').forEach(x=>x.classList.remove('active'));
-  btn.classList.add('active');
-  if(btn.dataset.platform!=='all'&&cat){
-    cat.value=btn.dataset.platform;
-    cat.dispatchEvent(new Event('change'))
-  }
-}));
-
-const orderForm=document.getElementById('orderForm');
-if(orderForm){
-  if(!settings.ordersEnabled||settings.maintenanceMode){
-    const b=orderForm.querySelector('button[type="submit"],button:not([type])');
-    if(b){b.disabled=true;b.textContent='Orders temporarily unavailable'}
-  }
-  orderForm.addEventListener('submit',e=>{
-    e.preventDefault();
-    if(!settings.ordersEnabled||settings.maintenanceMode){showToast('Orders are temporarily unavailable.');return}
-    const link=document.getElementById('link').value.trim(),s=currentService(),q=Number(qty.value||0);
-    if(!link||!s||q<s.min||q>s.max){showToast('Enter a valid link and quantity.');return}
-    const orders=demoOrders();
-    orders.unshift({id:Math.floor(Date.now()/1000),service:s.name,serviceId:s.id,link,qty:q,charge:charge.value,status:'Pending',created:new Date().toLocaleString()});
-    localStorage.setItem('demoOrders',JSON.stringify(orders));
-    showToast('Order submitted.');
-    orderForm.reset();updateServices();renderOrders()
-  })
-}
-
-function renderOrders(){
-  const tbody=document.getElementById('ordersBody');if(!tbody)return;
-  const orders=demoOrders();
-  tbody.innerHTML=orders.length?orders.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td>'+o.created+'</td><td>'+(o.status==='Completed'?'—':'<button class="btn btn-outline" data-complete-order="'+o.id+'">Complete</button>')+'</td></tr>').join(''):'<tr><td colspan="7" class="muted">No orders yet.</td></tr>'
-}
-renderOrders();
-
-document.addEventListener('click',e=>{
-  const btn=e.target.closest('[data-complete-order]');
-  if(btn){
-    const id=String(btn.dataset.completeOrder),orders=demoOrders(),found=orders.find(o=>String(o.id)===id);
-    if(found){found.status='Completed';localStorage.setItem('demoOrders',JSON.stringify(orders));showToast('Order completed.');renderOrders()}
-  }
-});
-
-const regForm=document.getElementById('registerForm');
-if(regForm){
-  if(!settings.registrationEnabled||settings.maintenanceMode){
-    regForm.innerHTML='<div class="alert">New registration is temporarily disabled.</div>'
-  }else{
-    regForm.addEventListener('submit',e=>{
-      e.preventDefault();
-      const username=document.getElementById('regUsername').value.trim();
-      const email=document.getElementById('regEmail').value.trim();
-      const password=document.getElementById('regPassword').value;
-      if(!username||!email||password.length<6){showToast('Fill all fields and use at least 6 password characters.');return}
-      setDemoProfile({username,email,password,balance:Number(settings.defaultBalance)});
-      localStorage.setItem('demoSession','1');location.href='index.html'
-    })
-  }
-}
-
-const loginForm=document.getElementById('loginForm');
-if(loginForm)loginForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  const p=getDemoProfile(),login=document.getElementById('loginUser').value.trim(),password=document.getElementById('loginPassword').value;
-  if((p.username===login||p.email===login)&&p.password===password){localStorage.setItem('demoSession','1');location.href='index.html'}
-  else showToast('Account not found. Register first.')
-});
-
-document.querySelectorAll('[data-logout]').forEach(el=>el.addEventListener('click',e=>{
-  e.preventDefault();localStorage.removeItem('demoSession');location.href='login.html'
-}));
-
-document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{
-  const target=document.querySelector(btn.dataset.copy);if(!target)return;
-  try{await navigator.clipboard.writeText(target.value||target.textContent);showToast('Copied')}catch(e){showToast('Copy failed')}
-}));
-
-const dashOrders=demoOrders();
-const totalCost=dashOrders.reduce((sum,o)=>sum+(parseFloat(String(o.charge||'').replace(/[^0-9.]/g,''))||0),0);
-setText('dashTotalOrders',dashOrders.length);
-setText('dashTotalCost','৳'+totalCost.toFixed(2));
-setText('dashPending',dashOrders.filter(o=>o.status==='Pending').length);
-setText('dashCompleted',dashOrders.filter(o=>o.status==='Completed').length);
-
-const massForm=document.getElementById('massOrderForm');
-if(massForm)massForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  if(!settings.ordersEnabled){showToast('Orders are temporarily unavailable.');return}
-  const raw=document.getElementById('massOrders').value.trim();if(!raw){showToast('Add at least one line.');return}
-  const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean),orders=demoOrders();let added=0;
-  for(const line of lines){
-    const [serviceId,link,qtyRaw]=line.split('|').map(x=>x&&x.trim()),qtyNum=Number(qtyRaw);
-    const service=allServices().find(s=>String(s.id)===String(serviceId));
-    if(service&&link&&qtyNum>=service.min&&qtyNum<=service.max){
-      orders.unshift({id:Math.floor(Date.now()/1000)+added,service:service.name,serviceId:service.id,link,qty:qtyNum,charge:'৳'+((qtyNum/1000)*service.rate).toFixed(2),status:'Pending',created:new Date().toLocaleString()});added++
-    }
-  }
-  localStorage.setItem('demoOrders',JSON.stringify(orders));showToast(added+' orders added.');document.getElementById('massOrders').value=''
-});
-
-const refillForm=document.getElementById('refillForm');
-if(refillForm)refillForm.addEventListener('submit',e=>{
-  e.preventDefault();const id=document.getElementById('refillOrderId').value.trim();
-  if(!id){showToast('Enter an order ID.');return}
-  const reqs=safeParse('demoRefills',[]);reqs.unshift({id,created:new Date().toLocaleString(),status:'Pending'});
-  localStorage.setItem('demoRefills',JSON.stringify(reqs));showToast('Refill request submitted.');refillForm.reset()
-});
-
-const recentBody=document.getElementById('recentCompletedBody');
-if(recentBody){
-  const done=demoOrders().filter(o=>o.status==='Completed');
-  recentBody.innerHTML=done.length?done.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.created+'</td></tr>').join(''):'<tr><td colspan="4"><div class="empty">No completed orders yet.</div></td></tr>'
-}
-
-const accountForm=document.getElementById('accountForm');
-if(accountForm)accountForm.addEventListener('submit',e=>{
-  e.preventDefault();const p=getDemoProfile();
-  p.username=document.getElementById('accountUsername').value.trim()||p.username||'customer';
-  p.email=document.getElementById('accountEmail').value.trim()||p.email||'customer@example.com';
-  setDemoProfile(p);showToast('Account saved.');setTimeout(()=>location.reload(),450)
-});
-
-const serviceSearch=document.getElementById('serviceSearch');
-if(serviceSearch)serviceSearch.addEventListener('input',()=>{
-  const q=serviceSearch.value.trim().toLowerCase();
-  document.querySelectorAll('#servicesTable tbody tr').forEach(row=>row.style.display=row.textContent.toLowerCase().includes(q)?'':'none')
-});
-
-function renderServicesTable(){
-  const tbody=document.querySelector('#servicesTable tbody');if(!tbody)return;
-  tbody.innerHTML=allServices().map(s=>'<tr><td>'+s.id+'</td><td>'+s.name+'</td><td>৳'+s.rate+'</td><td>'+s.min+'</td><td>'+s.max+'</td></tr>').join('')
-}
-renderServicesTable();
-
-document.addEventListener('DOMContentLoaded',()=>{
-  const header=document.querySelector('.header');
-  const side=document.querySelector('.sidebar');
-  const toggle=document.querySelector('[data-menu-toggle]');
-  if(header){
-    const left=header.firstElementChild;
-    if(left){
-      left.classList.add('header-left');
-      if(!left.querySelector('.mobile-brand')){
-        const brand=document.createElement('a');
-        brand.href='index.html';brand.className='mobile-brand';
-        brand.innerHTML='<span class="mini-logo">AS</span><span>'+getSettings().siteName+'</span>';
-        left.appendChild(brand)
-      }
-    }
-  }
-  let backdrop=document.querySelector('.sidebar-backdrop');
-  if(!backdrop){backdrop=document.createElement('div');backdrop.className='sidebar-backdrop';document.body.appendChild(backdrop)}
-  function syncMenu(){const opened=side&&side.classList.contains('open');backdrop.classList.toggle('show',!!opened);document.body.classList.toggle('menu-open',!!opened)}
-  function closeMenu(){if(side)side.classList.remove('open');syncMenu()}
-  if(toggle)toggle.addEventListener('click',()=>setTimeout(syncMenu,0));
-  backdrop.addEventListener('click',closeMenu);
-  document.querySelectorAll('.sidebar .nav a').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<=1100)closeMenu()}));
-  window.addEventListener('resize',()=>{if(window.innerWidth>1100)closeMenu()});
-
-  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-  const sideNav=document.querySelector('.sidebar .nav');
-  if(sideNav && !sideNav.querySelector('a[href="admin.html"]')){
-    const sessionHeading=[...sideNav.querySelectorAll('.nav-section')].find(x=>x.textContent.trim().toLowerCase()==='session');
-    const adminLink=document.createElement('a');adminLink.href='admin.html';adminLink.textContent='Admin Panel';
-    if(path==='admin.html')adminLink.classList.add('active');
-    if(sessionHeading)sideNav.insertBefore(adminLink,sessionHeading);else sideNav.appendChild(adminLink)
-  }
-
-  if(document.querySelector('.content')&&!document.querySelector('.mobile-bottom-nav')){
-    const bottom=document.createElement('nav');bottom.className='mobile-bottom-nav';
-    [['index.html','⌂','Home'],['orders.html','▤','Orders'],['services.html','★','Services'],['addfunds.html','৳','Funds']].forEach(([href,ico,label])=>{
-      const a=document.createElement('a');a.href=href;a.innerHTML='<span class="nav-ico">'+ico+'</span><span>'+label+'</span>';if(path===href)a.classList.add('active');bottom.appendChild(a)
-    });
-    const more=document.createElement('button');more.type='button';more.innerHTML='<span class="nav-ico">☰</span><span>Menu</span>';
-    more.addEventListener('click',()=>{if(!side)return;side.classList.add('open');document.body.classList.add('menu-open');const b=document.querySelector('.sidebar-backdrop');if(b)b.classList.add('show')});
-    bottom.appendChild(more);document.body.appendChild(bottom)
-  }
-
-  if(path==='index.html'&&settings.announcement){
-    const main=document.querySelector('main.page');
-    if(main&&!main.querySelector('.site-announcement')){
-      const n=document.createElement('div');n.className='site-announcement';n.textContent=settings.announcement;main.prepend(n)
-    }
-  }
-
-  if(path==='admin.html') initAdmin();
-});
-
-function initAdmin(){
-  const s=getSettings(),p=getDemoProfile(),orders=demoOrders(),refills=safeParse('demoRefills',[]);
-  const cost=orders.reduce((sum,o)=>sum+(parseFloat(String(o.charge||'').replace(/[^0-9.]/g,''))||0),0);
-  setText('adminUsers',p.username||p.email?1:0);setText('adminOrders',orders.length);setText('adminRevenue','৳'+cost.toFixed(2));
-  setText('adminPending',orders.filter(o=>o.status==='Pending').length);setText('adminRefills',refills.length);
-  setText('adminUsername',p.username||'No customer');setText('adminEmail',p.email||'No email');
-  const bal=document.getElementById('adminBalance');if(bal)bal.value=Number(p.balance??s.defaultBalance).toFixed(2);
-
-  const map={siteName:s.siteName,siteAnnouncement:s.announcement,siteSupportEmail:s.supportEmail,siteSupportTelegram:s.supportTelegram,siteDefaultBalance:s.defaultBalance};
-  Object.entries(map).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v});
-  const ordersToggle=document.getElementById('siteOrdersEnabled');if(ordersToggle)ordersToggle.checked=!!s.ordersEnabled;
-  const regToggle=document.getElementById('siteRegistrationEnabled');if(regToggle)regToggle.checked=!!s.registrationEnabled;
-  const maintenanceToggle=document.getElementById('siteMaintenanceMode');if(maintenanceToggle)maintenanceToggle.checked=!!s.maintenanceMode;
-
-  const tbody=document.getElementById('adminOrdersBody');
-  if(tbody)tbody.innerHTML=orders.length?orders.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td><div class="admin-actions">'+(o.status==='Completed'?'':'<button class="btn btn-outline" data-admin-complete="'+o.id+'">Complete</button>')+'<button class="btn btn-outline" data-admin-delete="'+o.id+'">Delete</button></div></td></tr>').join(''):'<tr><td colspan="6"><div class="empty">No orders yet.</div></td></tr>';
-
-  const settingsForm=document.getElementById('siteSettingsForm');
-  if(settingsForm)settingsForm.addEventListener('submit',e=>{
-    e.preventDefault();
-    saveSettings({
-      siteName:document.getElementById('siteName').value.trim()||'Amar Shop',
-      announcement:document.getElementById('siteAnnouncement').value.trim(),
-      supportEmail:document.getElementById('siteSupportEmail').value.trim(),
-      supportTelegram:document.getElementById('siteSupportTelegram').value.trim(),
-      defaultBalance:Math.max(0,Number(document.getElementById('siteDefaultBalance').value||0)),
-      ordersEnabled:document.getElementById('siteOrdersEnabled').checked,
-      registrationEnabled:document.getElementById('siteRegistrationEnabled').checked,
-      maintenanceMode:document.getElementById('siteMaintenanceMode')?.checked||false
-    });
-    showToast('Website settings saved.');setTimeout(()=>location.reload(),450)
-  });
-
-  const balanceForm=document.getElementById('adminBalanceForm');
-  if(balanceForm)balanceForm.addEventListener('submit',e=>{
-    e.preventDefault();const pr=getDemoProfile();pr.balance=Math.max(0,Number(document.getElementById('adminBalance').value||0));setDemoProfile(pr);showToast('Balance updated.');setTimeout(()=>location.reload(),400)
-  });
-
-  const clearBtn=document.getElementById('adminClearOrders');
-  if(clearBtn)clearBtn.addEventListener('click',()=>{if(confirm('Clear all orders from this browser?')){localStorage.removeItem('demoOrders');showToast('Orders cleared.');setTimeout(()=>location.reload(),400)}});
-
-  const exportBtn=document.getElementById('adminExportData');
-  if(exportBtn)exportBtn.addEventListener('click',()=>{
-    const payload={settings:getSettings(),profile:getDemoProfile(),services:getCustomServices(),orders:demoOrders(),refills:safeParse('demoRefills',[]),favorites:getFavorites(),activity:safeParse('amarActivity',[]),notifications:getNotifications(),exportedAt:new Date().toISOString()};
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download='amar-shop-data.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Data exported.')
-  });
-
-  const sf=document.getElementById('adminServiceForm');
-  if(sf)sf.addEventListener('submit',e=>{
-    e.preventDefault();
-    const list=getCustomServices();
-    const id=Number(document.getElementById('adminServiceId').value);
-    if(allServices().some(x=>Number(x.id)===id)){showToast('Service ID already exists.');return}
-    list.push({
-      id,
-      platform:document.getElementById('adminServicePlatform').value,
-      name:document.getElementById('adminServiceName').value.trim(),
-      rate:Number(document.getElementById('adminServiceRate').value),
-      min:Number(document.getElementById('adminServiceMin').value),
-      max:Number(document.getElementById('adminServiceMax').value),
-      desc:document.getElementById('adminServiceDesc').value.trim()||'Custom service'
-    });
-    localStorage.setItem('customServices',JSON.stringify(list));showToast('Service added.');setTimeout(()=>location.reload(),400)
-  });
-  renderAdminServices()
-}
-
-function renderAdminServices(){
-  const box=document.getElementById('adminServiceList');if(!box)return;
-  const list=getCustomServices();
-  box.innerHTML=list.length?list.map(s=>'<div class="admin-row"><div class="meta"><b>#'+s.id+' '+s.name+'</b><small>'+s.platform+' • ৳'+s.rate+'/1000 • '+s.min+'-'+s.max+'</small></div><button class="btn btn-outline" data-delete-service="'+s.id+'">Delete</button></div>').join(''):'<div class="empty">No custom services added yet.</div>'
-}
-
-document.addEventListener('click',e=>{
-  const complete=e.target.closest('[data-admin-complete]');
-  if(complete){const id=String(complete.dataset.adminComplete),orders=demoOrders(),found=orders.find(o=>String(o.id)===id);if(found){found.status='Completed';localStorage.setItem('demoOrders',JSON.stringify(orders));showToast('Order completed.');setTimeout(()=>location.reload(),350)}}
-  const del=e.target.closest('[data-admin-delete]');
-  if(del){const id=String(del.dataset.adminDelete);localStorage.setItem('demoOrders',JSON.stringify(demoOrders().filter(o=>String(o.id)!==id)));showToast('Order deleted.');setTimeout(()=>location.reload(),350)}
-  const ds=e.target.closest('[data-delete-service]');
-  if(ds){const id=String(ds.dataset.deleteService);localStorage.setItem('customServices',JSON.stringify(getCustomServices().filter(s=>String(s.id)!==id)));showToast('Service deleted.');setTimeout(()=>location.reload(),350)}
-});
-
-
-// Official support/contact rendering
-document.addEventListener('DOMContentLoaded',()=>{
-  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-  const s=getSettings();
-  if(path==='tickets.html'){
-    const cards=document.querySelectorAll('main.page .card');
-    const supportCard=[...cards].find(card=>/Contact options/i.test(card.textContent));
-    if(supportCard){
-      const timeline=supportCard.querySelector('.timeline');
-      if(timeline){
-        timeline.innerHTML=
-          '<div class="timeline-item"><b>Email Support</b><div class="muted">'+(s.supportEmail||'Not configured')+'</div></div>'+
-          '<div class="timeline-item"><b>Telegram Support</b><div class="muted">'+(s.supportTelegram||'Not configured')+'</div></div>'+
-          '<div class="timeline-item"><b>Support Status</b><div class="muted">Support center available</div></div>';
-      }
-    }
-  }
-});
-// Amar Shop Large Platform Experience v3
-const PLATFORM_PAGES=[
-  {href:'dashboard.html',label:'Home',icon:'⌂',group:'Core',keywords:'home dashboard overview'},
-  {href:'discover.html',label:'Discover',icon:'◈',group:'Explore',keywords:'discover browse popular services'},
-  {href:'favorites.html',label:'Favorites',icon:'♡',group:'Explore',keywords:'favorites saved services'},
-  {href:'wallet.html',label:'Wallet',icon:'৳',group:'Finance',keywords:'wallet balance funds'},
-  {href:'transactions.html',label:'Transactions',icon:'⇄',group:'Finance',keywords:'transactions payments history'},
-  {href:'activity.html',label:'Activity',icon:'◷',group:'Account',keywords:'activity history actions'},
-  {href:'notifications.html',label:'Notifications',icon:'♢',group:'Account',keywords:'notifications alerts updates'},
-  {href:'security.html',label:'Security',icon:'⌾',group:'Account',keywords:'security password sessions'},
-  {href:'help-center.html',label:'Help Center',icon:'?',group:'Help',keywords:'help guides support'},
-  {href:'faq.html',label:'FAQ',icon:'Q',group:'Help',keywords:'frequently asked questions'},
-  {href:'status.html',label:'System Status',icon:'●',group:'Help',keywords:'status uptime systems'},
-  {href:'about.html',label:'About',icon:'i',group:'Company',keywords:'about company platform'},
-  {href:'contact.html',label:'Contact',icon:'✉',group:'Company',keywords:'contact email telegram'},
-  {href:'terms.html',label:'Terms',icon:'§',group:'Company',keywords:'terms conditions policy'},
-  {href:'privacy.html',label:'Privacy',icon:'◇',group:'Company',keywords:'privacy data'}
+const STORE_DEFAULTS={name:'Amar Shop',tagline:'Everything you need, in one marketplace.',announcement:'Free delivery on selected products across Bangladesh.',supportEmail:'support@amarshop.example',supportPhone:'01XXXXXXXXX',freeShipping:1500,maintenance:false};
+const CATEGORIES=[
+  {id:'mobiles',name:'Mobiles',icon:'📱'},{id:'electronics',name:'Electronics',icon:'💻'},{id:'fashion',name:'Fashion',icon:'👕'},
+  {id:'beauty',name:'Beauty',icon:'💄'},{id:'home',name:'Home & Living',icon:'🏠'},{id:'grocery',name:'Groceries',icon:'🛒'},
+  {id:'appliances',name:'Appliances',icon:'🍳'},{id:'sports',name:'Sports',icon:'⚽'},{id:'books',name:'Books',icon:'📚'},
+  {id:'kids',name:'Kids & Toys',icon:'🧸'},{id:'automotive',name:'Automotive',icon:'🚗'},{id:'pets',name:'Pet Supplies',icon:'🐾'}
+];
+const BASE_PRODUCTS=[
+{id:1001,name:'Nova X5 5G Smartphone',cat:'mobiles',price:24990,old:28990,rating:4.8,sold:1240,stock:18,emoji:'📱',seller:'Amar Mobile Hub',tag:'Hot Deal',desc:'6.7-inch display, 8GB RAM, 256GB storage and fast charging.'},
+{id:1002,name:'Aero Buds Pro Wireless Earbuds',cat:'electronics',price:2190,old:2990,rating:4.7,sold:3400,stock:62,emoji:'🎧',seller:'Tech Zone',tag:'Best Seller',desc:'Noise reduction, low-latency audio and compact charging case.'},
+{id:1003,name:'Smart Watch Active 2',cat:'electronics',price:3290,old:4490,rating:4.6,sold:1890,stock:35,emoji:'⌚',seller:'Gadget Point',tag:'New',desc:'Fitness tracking, notification alerts and multi-day battery life.'},
+{id:1004,name:'14-inch Slim Laptop i5 16GB',cat:'electronics',price:58990,old:63990,rating:4.9,sold:420,stock:9,emoji:'💻',seller:'Computer World',tag:'Official',desc:'Fast everyday laptop with 16GB RAM and 512GB SSD.'},
+{id:1005,name:'Classic Cotton Panjabi',cat:'fashion',price:1290,old:1690,rating:4.7,sold:2280,stock:80,emoji:'🥻',seller:'Urban Wear',tag:'Popular',desc:'Comfortable premium cotton panjabi for everyday and festive use.'},
+{id:1006,name:'Premium Running Shoes',cat:'fashion',price:1890,old:2490,rating:4.6,sold:1760,stock:44,emoji:'👟',seller:'Step Store',tag:'Flash Sale',desc:'Lightweight cushioned running shoes with breathable upper.'},
+{id:1007,name:'Women Everyday Handbag',cat:'fashion',price:1450,old:1990,rating:4.5,sold:910,stock:29,emoji:'👜',seller:'Style Avenue',tag:'Trending',desc:'Structured everyday handbag with multiple compartments.'},
+{id:1008,name:'Vitamin C Brightening Serum',cat:'beauty',price:690,old:890,rating:4.8,sold:4600,stock:120,emoji:'🧴',seller:'Glow Care',tag:'Top Rated',desc:'Lightweight daily serum for a brighter-looking skincare routine.'},
+{id:1009,name:'Matte Lip Color Set',cat:'beauty',price:540,old:750,rating:4.5,sold:2100,stock:75,emoji:'💄',seller:'Beauty Basket',tag:'Value Pack',desc:'Long-lasting matte lip color set in wearable everyday shades.'},
+{id:1010,name:'Soft Microfiber Bedsheet Set',cat:'home',price:1190,old:1590,rating:4.7,sold:1300,stock:37,emoji:'🛏️',seller:'Home Comfort',tag:'Home Pick',desc:'Soft microfiber bedsheet set with matching pillow covers.'},
+{id:1011,name:'Modern Table Lamp',cat:'home',price:980,old:1290,rating:4.6,sold:680,stock:24,emoji:'💡',seller:'Decor House',tag:'Design Pick',desc:'Warm light table lamp for bedroom, desk or reading corner.'},
+{id:1012,name:'Non-stick Cookware 5pc Set',cat:'appliances',price:3290,old:3990,rating:4.8,sold:980,stock:21,emoji:'🍳',seller:'Kitchen Pro',tag:'Kitchen Deal',desc:'Durable non-stick cookware set for everyday family cooking.'},
+{id:1013,name:'1.5L Electric Kettle',cat:'appliances',price:1250,old:1590,rating:4.7,sold:2600,stock:50,emoji:'🫖',seller:'Appliance Mart',tag:'Fast Delivery',desc:'Quick-boil electric kettle with automatic shut-off.'},
+{id:1014,name:'Premium Basmati Rice 5kg',cat:'grocery',price:980,old:1090,rating:4.9,sold:5400,stock:140,emoji:'🍚',seller:'Daily Grocery',tag:'Fresh Stock',desc:'Long-grain basmati rice packed for family meals.'},
+{id:1015,name:'Healthy Mixed Nuts 500g',cat:'grocery',price:850,old:990,rating:4.8,sold:1500,stock:85,emoji:'🥜',seller:'Fresh Basket',tag:'Healthy Pick',desc:'Mixed nuts selection for snacking and breakfast.'},
+{id:1016,name:'Training Football Size 5',cat:'sports',price:790,old:990,rating:4.6,sold:870,stock:33,emoji:'⚽',seller:'Sports Arena',tag:'Sports Pick',desc:'Durable size-5 football suitable for training and casual matches.'},
+{id:1017,name:'Yoga Mat 8mm Comfort',cat:'sports',price:920,old:1190,rating:4.7,sold:760,stock:42,emoji:'🧘',seller:'Fit Store',tag:'Fitness',desc:'Comfortable non-slip yoga mat for home workouts and stretching.'},
+{id:1018,name:'Bangla Fiction Bestseller',cat:'books',price:390,old:450,rating:4.9,sold:3200,stock:95,emoji:'📖',seller:'Book Corner',tag:'Bestseller',desc:'Popular Bangla fiction title for leisure reading.'},
+{id:1019,name:'English Grammar Practice Book',cat:'books',price:320,old:380,rating:4.8,sold:2100,stock:110,emoji:'📘',seller:'Study House',tag:'Student Pick',desc:'Structured grammar exercises and practice for students.'},
+{id:1020,name:'Creative Building Blocks 120pc',cat:'kids',price:990,old:1390,rating:4.7,sold:1150,stock:38,emoji:'🧱',seller:'Kids Planet',tag:'Educational',desc:'Colorful building blocks for creative play and learning.'},
+{id:1021,name:'Remote Control Racing Car',cat:'kids',price:1590,old:1990,rating:4.6,sold:670,stock:17,emoji:'🏎️',seller:'Toy Box',tag:'Gift Pick',desc:'Rechargeable remote control racing car with responsive steering.'},
+{id:1022,name:'Car Phone Holder',cat:'automotive',price:450,old:650,rating:4.5,sold:1900,stock:73,emoji:'🚘',seller:'Auto Gear',tag:'Useful',desc:'Adjustable dashboard phone holder for daily driving.'},
+{id:1023,name:'Microfiber Car Cleaning Kit',cat:'automotive',price:650,old:850,rating:4.7,sold:890,stock:47,emoji:'🧽',seller:'Car Care BD',tag:'Car Care',desc:'Reusable microfiber cleaning kit for interior and exterior care.'},
+{id:1024,name:'Premium Dry Cat Food 1kg',cat:'pets',price:790,old:890,rating:4.8,sold:1250,stock:68,emoji:'🐱',seller:'Pet Corner',tag:'Pet Favorite',desc:'Balanced dry cat food for adult cats.'}
 ];
 
-function esc(v){
-  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
+function parse(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch(e){return fallback}}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function money(v){return '৳'+Number(v||0).toLocaleString('en-BD',{maximumFractionDigits:0})}
+function store(){return {...STORE_DEFAULTS,...parse('shopSettings',{})}}
+function profile(){return parse('shopProfile',{})}
+function customProducts(){return parse('shopProducts',[])}
+function products(){return [...BASE_PRODUCTS,...customProducts()]}
+function cart(){return parse('shopCart',[])}
+function wishlist(){return parse('shopWishlist',[]).map(String)}
+function orders(){return parse('shopOrders',[])}
+function toast(msg){const e=document.createElement('div');e.className='toast';e.textContent=msg;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function getProduct(id){return products().find(p=>String(p.id)===String(id))}
+function discount(p){return p.old>p.price?Math.round((1-p.price/p.old)*100):0}
+function cartCount(){return cart().reduce((n,x)=>n+Number(x.qty||0),0)}
+function cartTotal(){return cart().reduce((sum,x)=>{const p=getProduct(x.id);return sum+(p?p.price*Number(x.qty||0):0)},0)}
+function setCounts(){document.querySelectorAll('[data-cart-count]').forEach(e=>e.textContent=cartCount());document.querySelectorAll('[data-wish-count]').forEach(e=>e.textContent=wishlist().length)}
+function productCard(p){
+ const fav=wishlist().includes(String(p.id));
+ return '<article class="product-card">'+
+ '<button class="wish-btn'+(fav?' active':'')+'" data-wish="'+p.id+'" aria-label="Wishlist">'+(fav?'♥':'♡')+'</button>'+
+ '<a href="product.html?id='+p.id+'"><div class="product-visual"><span class="product-tag">'+esc(p.tag||'Deal')+'</span>'+esc(p.emoji||'📦')+'</div></a>'+
+ '<div class="product-body"><a href="product.html?id='+p.id+'"><div class="product-title">'+esc(p.name)+'</div></a>'+
+ '<div><span class="product-price">'+money(p.price)+'</span>'+(p.old?'<span class="product-old">'+money(p.old)+'</span>':'')+'</div>'+
+ '<div class="rating">★ '+Number(p.rating||4.5).toFixed(1)+' <span class="sold">('+Number(p.sold||0).toLocaleString()+' sold)</span></div>'+
+ '<div class="product-actions"><a class="btn btn-outline" href="product.html?id='+p.id+'">View</a><button class="btn btn-primary" data-add-cart="'+p.id+'">Add Cart</button></div></div></article>'
 }
-function currentPath(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
-function getFavorites(){return safeParse('favoriteServices',[]).map(String)}
-function saveFavorites(v){localStorage.setItem('favoriteServices',JSON.stringify([...new Set(v.map(String))]))}
-function toggleFavorite(id){
-  const fav=getFavorites(),sid=String(id),next=fav.includes(sid)?fav.filter(x=>x!==sid):[...fav,sid];
-  saveFavorites(next);return next.includes(sid)
+function renderProductGrid(id,list){const e=document.getElementById(id);if(e)e.innerHTML=list.length?list.map(productCard).join(''):'<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📦</div>No products found.</div>'}
+function addCart(id,qty=1){
+ const p=getProduct(id);if(!p)return;
+ const c=cart(),found=c.find(x=>String(x.id)===String(id));
+ if(found)found.qty=Math.min(p.stock,Number(found.qty||0)+Number(qty||1));else c.push({id:p.id,qty:Math.min(p.stock,Math.max(1,Number(qty||1)))});
+ save('shopCart',c);setCounts();toast('Added to cart')
 }
-function getNotifications(){
-  const existing=safeParse('amarNotifications',null);
-  if(existing)return existing;
-  const seed=[
-    {id:'n1',icon:'✨',title:'Welcome to Amar Shop',text:'Your account dashboard is ready to use.',time:'Today',read:false,href:'dashboard.html'},
-    {id:'n2',icon:'⚡',title:'Fast order workflow',text:'Choose a platform and submit an order from New Order.',time:'Today',read:false,href:'index.html'},
-    {id:'n3',icon:'🛟',title:'Support center',text:'Need help? Open the Help Center or Support page.',time:'Today',read:true,href:'help-center.html'}
-  ];
-  localStorage.setItem('amarNotifications',JSON.stringify(seed));return seed
+function toggleWish(id){
+ let w=wishlist(),sid=String(id);const add=!w.includes(sid);w=add?[...w,sid]:w.filter(x=>x!==sid);save('shopWishlist',w);setCounts();return add
 }
-function saveNotifications(v){localStorage.setItem('amarNotifications',JSON.stringify(v))}
-function markNotificationsRead(){
-  const n=getNotifications().map(x=>({...x,read:true}));saveNotifications(n);renderHeaderNotifications();renderNotificationsPage()
+function renderCategories(){
+ document.querySelectorAll('[data-categories]').forEach(box=>box.innerHTML=CATEGORIES.map(c=>'<a class="category-card" href="shop.html?cat='+c.id+'"><div class="category-icon">'+c.icon+'</div><b>'+esc(c.name)+'</b></a>').join(''))
 }
-function addActivity(type,title,detail){
-  const list=safeParse('amarActivity',[]);
-  list.unshift({id:Date.now(),type,title,detail,time:new Date().toLocaleString()});
-  localStorage.setItem('amarActivity',JSON.stringify(list.slice(0,100)))
+function renderHome(){
+ if(!document.getElementById('homeFeatured'))return;
+ renderCategories();
+ const ps=products();
+ renderProductGrid('homeFeatured',ps.slice(0,10));
+ renderProductGrid('flashProducts',ps.filter(p=>discount(p)>=15).slice(0,5));
+ renderProductGrid('newProducts',ps.slice().reverse().slice(0,10));
 }
-function getActivity(){
-  const own=safeParse('amarActivity',[]);
-  const orderItems=demoOrders().map(o=>({id:'o'+o.id,type:'order',title:'Order #'+o.id,detail:o.service+' • '+o.status,time:o.created}));
-  return [...own,...orderItems].sort((a,b)=>String(b.id).localeCompare(String(a.id)))
+function renderShop(){
+ const grid=document.getElementById('shopGrid');if(!grid)return;
+ const params=new URLSearchParams(location.search),cat=params.get('cat')||'all',q=(params.get('q')||'').toLowerCase(),sort=params.get('sort')||'popular';
+ const search=document.getElementById('shopSearch');if(search)search.value=params.get('q')||'';
+ document.querySelectorAll('[data-cat-filter]').forEach(a=>a.classList.toggle('active',a.dataset.catFilter===cat));
+ let list=products().filter(p=>(cat==='all'||p.cat===cat)&&(!q||[p.name,p.cat,p.seller,p.desc].join(' ').toLowerCase().includes(q)));
+ if(sort==='low')list.sort((a,b)=>a.price-b.price);if(sort==='high')list.sort((a,b)=>b.price-a.price);if(sort==='rating')list.sort((a,b)=>b.rating-a.rating);if(sort==='popular')list.sort((a,b)=>b.sold-a.sold);
+ renderProductGrid('shopGrid',list);const count=document.getElementById('shopCount');if(count)count.textContent=list.length+' products';
+ const sorter=document.getElementById('shopSort');if(sorter){sorter.value=sort;sorter.onchange=()=>{params.set('sort',sorter.value);location.search=params.toString()}}
+ if(search)search.oninput=()=>{const val=search.value.trim();const p=new URLSearchParams(location.search);if(val)p.set('q',val);else p.delete('q');history.replaceState(null,'','?'+p.toString());renderShop()}
 }
-function platformEmoji(platform){
-  return ({youtube:'▶️',facebook:'f',instagram:'◎',tiktok:'♪',telegram:'➤',twitter:'𝕏',linkedin:'in',discord:'◉',spotify:'◉',twitch:'◫',soundcloud:'☁',webtraffic:'↗'})[platform]||'★'
+function renderProduct(){
+ const box=document.getElementById('productDetail');if(!box)return;
+ const id=new URLSearchParams(location.search).get('id'),p=getProduct(id)||products()[0],fav=wishlist().includes(String(p.id));
+ document.title=p.name+' - '+store().name;
+ box.innerHTML='<div class="detail-visual">'+esc(p.emoji)+'</div><div><div class="chip">'+esc(CATEGORIES.find(c=>c.id===p.cat)?.name||p.cat)+'</div><h1 class="detail-title">'+esc(p.name)+'</h1><div class="rating">★ '+p.rating+' <span class="sold">'+p.sold.toLocaleString()+' sold</span></div><div style="margin:15px 0"><span class="detail-price">'+money(p.price)+'</span><span class="detail-old">'+money(p.old)+'</span> <span class="chip">'+discount(p)+'% OFF</span></div><p style="color:var(--muted);line-height:1.7">'+esc(p.desc)+'</p><div class="detail-meta"><span class="chip">Seller: '+esc(p.seller)+'</span><span class="chip">Stock: '+p.stock+'</span><span class="chip">Cash on Delivery</span><span class="chip">7 Day Return</span></div><div class="qty-row" style="margin-top:20px"><b>Quantity</b><button class="qty-btn" data-qty-minus>−</button><input id="detailQty" class="qty-input" value="1" type="number" min="1" max="'+p.stock+'"><button class="qty-btn" data-qty-plus>+</button></div><div class="detail-actions"><button class="btn btn-primary" data-detail-cart="'+p.id+'">Add to Cart</button><button class="btn btn-outline" data-buy-now="'+p.id+'">Buy Now</button><button class="btn btn-outline" data-wish="'+p.id+'">'+(fav?'♥ Saved':'♡ Wishlist')+'</button></div><div class="card" style="margin-top:18px;box-shadow:none"><b>Delivery & Protection</b><p style="color:var(--muted);font-size:12px;line-height:1.6">Delivery cost and estimated arrival depend on location. Checkout currently runs as a frontend preview until a production backend and payment provider are connected.</p></div></div>';
+ renderProductGrid('relatedProducts',products().filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,5))
 }
-function serviceCard(s){
-  const fav=getFavorites().includes(String(s.id));
-  return '<article class="market-card" data-service-card="'+esc(s.id)+'">'+
-    '<button class="fav-btn'+(fav?' active':'')+'" data-favorite-service="'+esc(s.id)+'" aria-label="Favorite">'+(fav?'♥':'♡')+'</button>'+
-    '<div class="market-top"><div class="market-logo">'+esc(platformEmoji(s.platform))+'</div><div class="market-title"><b>'+esc(s.name)+'</b><small>'+esc(s.platform)+'</small></div></div>'+
-    '<div class="market-rate">৳'+Number(s.rate).toFixed(2)+' <span>/ 1000</span></div>'+
-    '<div class="muted" style="font-size:12px;line-height:1.5">'+esc(s.desc||'Service available')+'</div>'+
-    '<div class="market-meta"><span class="meta-chip">Min '+esc(s.min)+'</span><span class="meta-chip">Max '+esc(s.max)+'</span><span class="meta-chip">ID '+esc(s.id)+'</span></div>'+
-    '<div style="margin-top:13px"><a class="btn btn-primary" href="index.html?service='+encodeURIComponent(s.id)+'">Order Now</a></div>'+
-  '</article>'
+function renderCart(){
+ const list=document.getElementById('cartList');if(!list)return;const c=cart();
+ if(!c.length){list.innerHTML='<div class="card empty"><div class="empty-icon">🛒</div><h3>Your cart is empty</h3><a class="btn btn-primary" href="shop.html">Start Shopping</a></div>'}
+ else list.innerHTML=c.map(x=>{const p=getProduct(x.id);if(!p)return '';return '<div class="cart-item"><div class="cart-thumb">'+esc(p.emoji)+'</div><div><a class="cart-name" href="product.html?id='+p.id+'">'+esc(p.name)+'</a><div class="cart-sub">'+esc(p.seller)+'</div><div class="cart-price">'+money(p.price)+'</div><div class="qty-row" style="margin-top:8px"><button class="qty-btn" data-cart-dec="'+p.id+'">−</button><span>'+x.qty+'</span><button class="qty-btn" data-cart-inc="'+p.id+'">+</button><button class="btn btn-danger" data-cart-remove="'+p.id+'" style="min-height:34px;padding:6px 9px">Remove</button></div></div><div><b>'+money(p.price*x.qty)+'</b></div></div>'}).join('');
+ renderCartSummary()
 }
-function renderDiscover(filter='all',query=''){
-  const grid=document.getElementById('discoverGrid');if(!grid)return;
-  const q=query.trim().toLowerCase();
-  const list=allServices().filter(s=>(filter==='all'||s.platform===filter)&&(!q||[s.id,s.name,s.platform,s.desc].join(' ').toLowerCase().includes(q)));
-  grid.innerHTML=list.length?list.map(serviceCard).join(''):'<div class="card empty-state" style="grid-column:1/-1"><div class="quick-icon">⌕</div><b>No services found</b><p class="muted">Try another platform or search term.</p></div>'
+function renderCartSummary(){
+ const subtotal=cartTotal(),s=store(),shipping=subtotal===0?0:(subtotal>=s.freeShipping?0:80),total=subtotal+shipping;
+ document.querySelectorAll('[data-subtotal]').forEach(e=>e.textContent=money(subtotal));document.querySelectorAll('[data-shipping]').forEach(e=>e.textContent=shipping?money(shipping):'FREE');document.querySelectorAll('[data-cart-total]').forEach(e=>e.textContent=money(total))
 }
-function renderFavorites(){
-  const grid=document.getElementById('favoritesGrid');if(!grid)return;
-  const ids=getFavorites(),list=allServices().filter(s=>ids.includes(String(s.id)));
-  grid.innerHTML=list.length?list.map(serviceCard).join(''):'<div class="card empty-state" style="grid-column:1/-1"><div class="quick-icon">♡</div><b>No favorites yet</b><p class="muted">Save services from Discover to find them quickly here.</p><a class="btn btn-primary" href="discover.html">Discover Services</a></div>'
+function renderWishlist(){renderProductGrid('wishlistGrid',products().filter(p=>wishlist().includes(String(p.id))))}
+function renderOrders(){
+ const box=document.getElementById('ordersList');if(!box)return;const os=orders();
+ box.innerHTML=os.length?os.map(o=>'<article class="order-card"><div class="order-top"><div><b>Order #'+o.id+'</b><div style="font-size:11px;color:var(--muted);margin-top:4px">'+esc(o.created)+'</div></div><span class="status '+String(o.status).toLowerCase()+'">'+esc(o.status)+'</span></div><div class="order-products">'+o.items.map(i=>{const p=getProduct(i.id);return '<div class="order-mini" title="'+esc(p?.name||'Product')+'">'+esc(p?.emoji||'📦')+'</div>'}).join('')+'</div><div style="display:flex;justify-content:space-between;gap:10px;margin-top:12px"><span>'+o.items.reduce((n,i)=>n+i.qty,0)+' items</span><b>'+money(o.total)+'</b></div></article>').join(''):'<div class="card empty"><div class="empty-icon">📦</div><h3>No orders yet</h3><a class="btn btn-primary" href="shop.html">Shop Now</a></div>'
 }
-function renderTransactions(){
-  const box=document.getElementById('transactionList');if(!box)return;
-  const p=getDemoProfile(),s=getSettings(),orders=demoOrders();
-  const tx=[{icon:'🎁',title:'Starting balance',note:'Account starting balance',amount:Number(p.balance??s.defaultBalance),kind:'in',time:'Account'}];
-  orders.forEach(o=>tx.push({icon:'🛒',title:o.service,note:'Order #'+o.id,amount:-(parseFloat(String(o.charge).replace(/[^0-9.]/g,''))||0),kind:'out',time:o.created}));
-  box.innerHTML=tx.map(t=>'<div class="transaction-item"><div class="tx-icon">'+t.icon+'</div><div class="tx-main"><b>'+esc(t.title)+'</b><small>'+esc(t.note)+' • '+esc(t.time)+'</small></div><div class="tx-amount '+t.kind+'">'+(t.amount>=0?'+':'-')+'৳'+Math.abs(t.amount).toFixed(2)+'</div></div>').join('')
+function renderAccount(){
+ const p=profile();document.querySelectorAll('[data-profile-name]').forEach(e=>e.value!==undefined?e.value=p.name||'':e.textContent=p.name||'Customer');document.querySelectorAll('[data-profile-email]').forEach(e=>e.value!==undefined?e.value=p.email||'':e.textContent=p.email||'Not set');document.querySelectorAll('[data-profile-phone]').forEach(e=>e.value!==undefined?e.value=p.phone||'':e.textContent=p.phone||'Not set')
 }
-function renderActivity(){
-  const box=document.getElementById('activityList');if(!box)return;
-  const list=getActivity();
-  box.innerHTML=list.length?list.map(a=>'<div class="activity-item"><div class="activity-badge">'+(a.type==='order'?'🛒':'⚡')+'</div><div class="activity-body"><b>'+esc(a.title)+'</b><p>'+esc(a.detail||'')+'</p></div><span class="activity-time">'+esc(a.time||'')+'</span></div>').join(''):'<div class="empty">No recent activity.</div>'
+function renderAdmin(){
+ if(!document.getElementById('adminProducts'))return;
+ const os=orders(),ps=products();document.getElementById('kpiProducts').textContent=ps.length;document.getElementById('kpiOrders').textContent=os.length;document.getElementById('kpiRevenue').textContent=money(os.reduce((s,o)=>s+Number(o.total||0),0));document.getElementById('kpiPending').textContent=os.filter(o=>o.status==='Processing'||o.status==='Pending').length;
+ document.getElementById('adminProducts').innerHTML=ps.map(p=>'<tr><td>'+p.id+'</td><td>'+esc(p.emoji)+' '+esc(p.name)+'</td><td>'+esc(p.cat)+'</td><td>'+money(p.price)+'</td><td>'+p.stock+'</td><td>'+(p.custom?'<button class="btn btn-danger" data-admin-delete-product="'+p.id+'">Delete</button>':'Built-in')+'</td></tr>').join('');
+ document.getElementById('adminOrders').innerHTML=os.length?os.map(o=>'<tr><td>#'+o.id+'</td><td>'+esc(o.customer?.name||'Customer')+'</td><td>'+o.items.reduce((n,i)=>n+i.qty,0)+'</td><td>'+money(o.total)+'</td><td>'+esc(o.status)+'</td><td><select class="form-control" data-order-status="'+o.id+'" style="height:36px"><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></td></tr>').join(''):'<tr><td colspan="6">No orders</td></tr>';
+ document.querySelectorAll('[data-order-status]').forEach(s=>{const o=os.find(x=>String(x.id)===s.dataset.orderStatus);if(o)s.value=o.status;s.onchange=()=>{o.status=s.value;save('shopOrders',os);toast('Order status updated')}})
+ const st=store();['adminStoreName','adminAnnouncement','adminSupportEmail','adminSupportPhone','adminFreeShipping'].forEach(id=>{const e=document.getElementById(id);if(!e)return;const map={adminStoreName:st.name,adminAnnouncement:st.announcement,adminSupportEmail:st.supportEmail,adminSupportPhone:st.supportPhone,adminFreeShipping:st.freeShipping};e.value=map[id]});document.getElementById('adminMaintenance').checked=!!st.maintenance
 }
-function renderNotificationsPage(){
-  const box=document.getElementById('notificationsList');if(!box)return;
-  const list=getNotifications();
-  box.innerHTML=list.map(n=>'<a class="notice-item'+(!n.read?' unread':'')+'" href="'+esc(n.href||'#')+'" data-notification-id="'+esc(n.id)+'"><div class="notice-icon">'+esc(n.icon)+'</div><div class="notice-copy"><b>'+esc(n.title)+'</b><div>'+esc(n.text)+'</div><small>'+esc(n.time)+'</small></div></a>').join('')
+function updateHeader(){
+ const s=store(),p=profile();document.querySelectorAll('[data-store-name]').forEach(e=>e.textContent=s.name);document.querySelectorAll('[data-announcement]').forEach(e=>e.textContent=s.announcement);document.querySelectorAll('[data-header-user]').forEach(e=>e.textContent=p.name||'Account');document.title=document.title.replace(/Amar Shop/g,s.name);setCounts()
 }
-function renderHeaderNotifications(){
-  const btn=document.getElementById('headerNotifications'),pop=document.getElementById('notificationPopover');
-  const list=getNotifications(),unread=list.filter(n=>!n.read).length;
-  if(btn){
-    const dot=btn.querySelector('.notification-dot');
-    if(dot){dot.textContent=unread;dot.style.display=unread?'grid':'none'}
-  }
-  if(pop){
-    pop.innerHTML='<div class="popover-title"><span>Notifications</span><button class="btn btn-outline" id="markAllRead" style="min-height:30px;padding:6px 9px;font-size:10px">Mark read</button></div>'+
-      list.slice(0,5).map(n=>'<a class="notice-item'+(!n.read?' unread':'')+'" href="'+esc(n.href||'#')+'"><div class="notice-icon">'+esc(n.icon)+'</div><div class="notice-copy"><b>'+esc(n.title)+'</b><div>'+esc(n.text)+'</div><small>'+esc(n.time)+'</small></div></a>').join('')+
-      '<div style="padding:8px"><a class="btn btn-primary" style="display:block;text-align:center" href="notifications.html">View all</a></div>';
-    const mark=pop.querySelector('#markAllRead');if(mark)mark.onclick=markNotificationsRead
-  }
+function globalSearch(){
+ const form=document.getElementById('globalSearch');if(!form)return;form.onsubmit=e=>{e.preventDefault();const q=form.querySelector('input').value.trim();location.href='shop.html'+(q?'?q='+encodeURIComponent(q):'')};const q=new URLSearchParams(location.search).get('q');if(q)form.querySelector('input').value=q
 }
-function searchItems(q){
-  q=q.trim().toLowerCase();if(!q)return [];
-  const pages=PLATFORM_PAGES.concat([
-    {href:'index.html',label:'New Order',icon:'＋',keywords:'new order create buy'},
-    {href:'orders.html',label:'Orders',icon:'▤',keywords:'orders history'},
-    {href:'services.html',label:'Services',icon:'★',keywords:'services rates price'},
-    {href:'addfunds.html',label:'Add Funds',icon:'৳',keywords:'add funds payment'}
-  ]).filter(x=>(x.label+' '+x.keywords).toLowerCase().includes(q)).map(x=>({...x,type:'Page'}));
-  const services=allServices().filter(s=>[s.id,s.name,s.platform,s.desc].join(' ').toLowerCase().includes(q)).slice(0,10).map(s=>({href:'index.html?service='+s.id,label:s.name,icon:platformEmoji(s.platform),keywords:'',type:'Service'}));
-  return [...pages,...services].slice(0,15)
+function checkoutInit(){
+ const form=document.getElementById('checkoutForm');if(!form)return;const p=profile();['coName','coPhone','coEmail','coAddress','coCity'].forEach(id=>{const e=document.getElementById(id);if(!e)return;const map={coName:p.name||'',coPhone:p.phone||'',coEmail:p.email||'',coAddress:p.address||'',coCity:p.city||''};e.value=map[id]});renderCartSummary();const summary=document.getElementById('checkoutItems');if(summary)summary.innerHTML=cart().map(i=>{const pr=getProduct(i.id);return '<div class="summary-row"><span>'+esc(pr?.name||'Product')+' × '+i.qty+'</span><b>'+money((pr?.price||0)*i.qty)+'</b></div>'}).join('');
+ form.onsubmit=e=>{e.preventDefault();if(!cart().length){toast('Cart is empty');return}const fd=new FormData(form),customer={name:fd.get('name'),phone:fd.get('phone'),email:fd.get('email'),address:fd.get('address'),city:fd.get('city')},payment=fd.get('payment'),subtotal=cartTotal(),shipping=subtotal>=store().freeShipping?0:80;const os=orders();os.unshift({id:Date.now().toString().slice(-9),created:new Date().toLocaleString(),status:'Processing',customer,payment,items:cart(),subtotal,shipping,total:subtotal+shipping});save('shopOrders',os);save('shopProfile',{...profile(),...customer});save('shopCart',[]);location.href='order-success.html?id='+os[0].id}
 }
-function showSearch(query=''){
-  let overlay=document.getElementById('searchOverlay');
-  if(!overlay){
-    overlay=document.createElement('div');overlay.id='searchOverlay';overlay.className='search-overlay';
-    overlay.innerHTML='<div class="search-modal"><div class="search-modal-head"><span style="font-size:20px">⌕</span><input id="globalSearchInput" placeholder="Search pages, services, tools..."><button class="btn btn-outline" id="closeSearch">Esc</button></div><div class="search-results" id="globalSearchResults"></div></div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click',e=>{if(e.target===overlay)hideSearch()});
-    overlay.querySelector('#closeSearch').onclick=hideSearch;
-    overlay.querySelector('#globalSearchInput').addEventListener('input',e=>renderSearchResults(e.target.value))
-  }
-  overlay.classList.add('show');
-  const input=overlay.querySelector('#globalSearchInput');input.value=query;setTimeout(()=>input.focus(),0);renderSearchResults(query)
-}
-function hideSearch(){const o=document.getElementById('searchOverlay');if(o)o.classList.remove('show')}
-function renderSearchResults(q){
-  const box=document.getElementById('globalSearchResults');if(!box)return;
-  const items=searchItems(q);
-  box.innerHTML=q?items.length?items.map(x=>'<a class="search-result" href="'+esc(x.href)+'"><div class="search-result-icon">'+esc(x.icon||'⌕')+'</div><div class="search-result-text"><b>'+esc(x.label)+'</b><small>'+esc(x.type||'Page')+'</small></div></a>').join(''):'<div class="empty">No results found.</div>':'<div class="empty">Search services, orders, wallet, help and more.</div>'
-}
-
-document.addEventListener('keydown',e=>{
-  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();showSearch()}
-  if(e.key==='Escape')hideSearch()
-});
+function successInit(){const id=new URLSearchParams(location.search).get('id'),o=orders().find(x=>String(x.id)===String(id));const e=document.getElementById('successOrder');if(e)e.textContent=o?'#'+o.id:'#—'}
 
 document.addEventListener('click',e=>{
-  const fav=e.target.closest('[data-favorite-service]');
-  if(fav){
-    e.preventDefault();
-    const active=toggleFavorite(fav.dataset.favoriteService);
-    fav.classList.toggle('active',active);fav.textContent=active?'♥':'♡';
-    if(currentPath()==='favorites.html')renderFavorites();
-    showToast(active?'Saved to favorites':'Removed from favorites');
-    addActivity('favorite',active?'Service saved':'Favorite removed','Service ID '+fav.dataset.favoriteService)
-  }
-  const n=e.target.closest('[data-notification-id]');
-  if(n){
-    const id=n.dataset.notificationId;
-    saveNotifications(getNotifications().map(x=>x.id===id?{...x,read:true}:x))
-  }
+ const add=e.target.closest('[data-add-cart]');if(add){addCart(add.dataset.addCart);return}
+ const wish=e.target.closest('[data-wish]');if(wish){const on=toggleWish(wish.dataset.wish);wish.classList.toggle('active',on);wish.textContent=on?'♥':'♡';if(wish.closest('.detail-actions'))wish.textContent=on?'♥ Saved':'♡ Wishlist';if(document.getElementById('wishlistGrid'))renderWishlist();return}
+ const inc=e.target.closest('[data-cart-inc]'),dec=e.target.closest('[data-cart-dec]'),rem=e.target.closest('[data-cart-remove]');
+ if(inc||dec||rem){const id=(inc||dec||rem).dataset.cartInc||(inc||dec||rem).dataset.cartDec||(inc||dec||rem).dataset.cartRemove;let c=cart(),x=c.find(i=>String(i.id)===String(id));if(rem)c=c.filter(i=>String(i.id)!==String(id));else if(x){x.qty=Math.max(1,x.qty+(inc?1:-1));const p=getProduct(id);if(p)x.qty=Math.min(x.qty,p.stock)}save('shopCart',c);setCounts();renderCart();return}
+ const plus=e.target.closest('[data-qty-plus]'),minus=e.target.closest('[data-qty-minus]');if(plus||minus){const input=document.getElementById('detailQty');if(input)input.value=Math.max(1,Number(input.value||1)+(plus?1:-1));return}
+ const dc=e.target.closest('[data-detail-cart]');if(dc){addCart(dc.dataset.detailCart,Number(document.getElementById('detailQty')?.value||1));return}
+ const buy=e.target.closest('[data-buy-now]');if(buy){addCart(buy.dataset.buyNow,Number(document.getElementById('detailQty')?.value||1));location.href='checkout.html';return}
+ const del=e.target.closest('[data-admin-delete-product]');if(del){save('shopProducts',customProducts().filter(p=>String(p.id)!==String(del.dataset.adminDeleteProduct)));toast('Product deleted');renderAdmin();return}
 });
 
 document.addEventListener('DOMContentLoaded',()=>{
-  const path=currentPath(),header=document.querySelector('.header'),headerLeft=header&&header.firstElementChild,headerActions=header&&header.querySelector('.header-actions');
-
-  // Large sidebar navigation.
-  const sideNav=document.querySelector('.sidebar .nav');
-  if(sideNav&&!sideNav.querySelector('[data-platform-nav="1"]')){
-    const anchor=[...sideNav.querySelectorAll('.nav-section')].find(x=>x.textContent.trim().toLowerCase()==='session');
-    const frag=document.createDocumentFragment();
-    ['Explore','Finance','Account','Help','Company'].forEach(group=>{
-      const groupItems=PLATFORM_PAGES.filter(x=>x.group===group);
-      if(!groupItems.length)return;
-      const title=document.createElement('div');title.className='nav-section';title.textContent=group;title.dataset.platformNav='1';frag.appendChild(title);
-      groupItems.forEach(x=>{
-        const a=document.createElement('a');a.href=x.href;a.dataset.platformNav='1';a.innerHTML='<span style="display:inline-block;width:19px">'+x.icon+'</span>'+x.label;
-        if(path===x.href)a.classList.add('active');frag.appendChild(a)
-      })
-    });
-    if(anchor)sideNav.insertBefore(frag,anchor);else sideNav.appendChild(frag)
-  }
-
-  // Global search and account controls.
-  if(headerLeft&&!headerLeft.querySelector('.header-search')){
-    const search=document.createElement('div');search.className='header-search';
-    search.innerHTML='<span class="search-ico">⌕</span><input aria-label="Search" placeholder="Search Amar Shop..." readonly><span class="search-kbd">⌘K</span>';
-    search.onclick=()=>showSearch();headerLeft.appendChild(search)
-  }
-  if(headerActions&&!document.getElementById('headerNotifications')){
-    const nb=document.createElement('button');nb.id='headerNotifications';nb.className='header-icon-btn';nb.type='button';nb.innerHTML='♢<span class="notification-dot"></span>';
-    const profileBtn=document.createElement('a');profileBtn.className='profile-chip';profileBtn.href='account.html';profileBtn.innerHTML='<span class="profile-avatar">'+esc((profile.username||'C').slice(0,1).toUpperCase())+'</span><span>'+esc(profile.username||'Account')+'</span>';
-    headerActions.insertBefore(nb,headerActions.firstChild);headerActions.appendChild(profileBtn);
-    const pop=document.createElement('div');pop.id='notificationPopover';pop.className='header-popover';document.body.appendChild(pop);
-    nb.onclick=()=>{pop.classList.toggle('show');renderHeaderNotifications()}
-    document.addEventListener('click',ev=>{if(!pop.contains(ev.target)&&!nb.contains(ev.target))pop.classList.remove('show')})
-  }
-  renderHeaderNotifications();
-
-  // App-style mobile nav.
-  const bottom=document.querySelector('.mobile-bottom-nav');
-  if(bottom){
-    bottom.innerHTML='';
-    [['dashboard.html','⌂','Home'],['discover.html','◈','Explore'],['index.html','＋','Order'],['wallet.html','৳','Wallet']].forEach(([href,ico,label])=>{
-      const a=document.createElement('a');a.href=href;a.innerHTML='<span class="nav-ico">'+ico+'</span><span>'+label+'</span>';if(path===href)a.classList.add('active');bottom.appendChild(a)
-    });
-    const more=document.createElement('button');more.type='button';more.innerHTML='<span class="nav-ico">☰</span><span>Menu</span>';
-    more.onclick=()=>{const s=document.querySelector('.sidebar');if(s)s.classList.add('open');document.body.classList.add('menu-open');const b=document.querySelector('.sidebar-backdrop');if(b)b.classList.add('show')};bottom.appendChild(more)
-  }
-
-  // Footer.
-  const main=document.querySelector('main.page');
-  if(main&&!main.querySelector('.site-footer')){
-    const footer=document.createElement('footer');footer.className='site-footer';
-    footer.innerHTML='<span>© '+new Date().getFullYear()+' '+esc(getSettings().siteName)+' • Social services platform</span><span class="footer-links"><a href="about.html">About</a><a href="help-center.html">Help</a><a href="status.html">Status</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></span>';
-    main.appendChild(footer)
-  }
-
-  // Rich dashboard.
-  if(path==='dashboard.html'&&main&&!main.querySelector('.hero-banner')){
-    const hero=document.createElement('section');hero.className='hero-banner';hero.innerHTML='<h1>Everything you need in one place.</h1><p>Browse services, manage orders, track spending, save favorites and get support from your Amar Shop dashboard.</p><div class="hero-actions"><a class="btn btn-primary" href="index.html">Create Order</a><a class="btn btn-outline" href="discover.html">Discover Services</a></div>';
-    main.insertBefore(hero,main.firstChild);
-    const quick=document.createElement('section');quick.style.marginTop='16px';quick.innerHTML='<div class="quick-grid">'+[
-      ['index.html','＋','New Order','Create a new order'],
-      ['discover.html','◈','Discover','Browse all services'],
-      ['favorites.html','♡','Favorites','Your saved services'],
-      ['wallet.html','৳','Wallet','Balance and funds'],
-      ['activity.html','◷','Activity','Recent actions'],
-      ['help-center.html','?','Help Center','Guides and support']
-    ].map(x=>'<a class="quick-card" href="'+x[0]+'"><div class="quick-icon">'+x[1]+'</div><b>'+x[2]+'</b><small>'+x[3]+'</small></a>').join('')+'</div>';
-    hero.insertAdjacentElement('afterend',quick)
-  }
-
-  if(path==='discover.html'){
-    renderDiscover();
-    document.querySelectorAll('[data-discover-filter]').forEach(btn=>btn.onclick=()=>{
-      document.querySelectorAll('[data-discover-filter]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-      renderDiscover(btn.dataset.discoverFilter,document.getElementById('discoverSearch')?.value||'')
-    });
-    const ds=document.getElementById('discoverSearch');if(ds)ds.oninput=()=>{const active=document.querySelector('[data-discover-filter].active');renderDiscover(active?.dataset.discoverFilter||'all',ds.value)}
-  }
-  if(path==='favorites.html')renderFavorites();
-  if(path==='transactions.html'||path==='wallet.html')renderTransactions();
-  if(path==='activity.html')renderActivity();
-  if(path==='notifications.html')renderNotificationsPage();
-
-  document.querySelectorAll('.faq-q').forEach(q=>q.onclick=()=>q.closest('.faq-item').classList.toggle('open'));
-
-  const contactForm=document.getElementById('contactForm');
-  if(contactForm)contactForm.onsubmit=e=>{e.preventDefault();addActivity('support','Contact message prepared',document.getElementById('contactSubject')?.value||'Message');showToast('Message saved in preview mode.');contactForm.reset()};
-
-  const serviceParam=new URLSearchParams(location.search).get('service');
-  if(path==='index.html'&&serviceParam&&svc){
-    const found=allServices().find(s=>String(s.id)===String(serviceParam));
-    if(found&&cat){cat.value=found.platform;updateServices();svc.value=String(found.id);updateInfo();setTimeout(()=>document.getElementById('orderForm')?.scrollIntoView({behavior:'smooth',block:'center'}),150)}
-  }
-});
-// Amar Shop dashboard and support polish
-document.addEventListener('DOMContentLoaded',()=>{
-  const s=getSettings();
-  document.querySelectorAll('[data-support-email]').forEach(el=>el.textContent=s.supportEmail||'Not configured');
-  document.querySelectorAll('[data-support-telegram]').forEach(el=>el.textContent=s.supportTelegram||'Not configured');
-
-  const popular=document.getElementById('dashboardPopular');
-  if(popular) popular.innerHTML=allServices().slice(0,3).map(serviceCard).join('');
-
-  const feed=document.getElementById('dashboardActivity');
-  if(feed){
-    const list=getActivity().slice(0,6);
-    feed.innerHTML=list.length?list.map(a=>'<div class="activity-item"><div class="activity-badge">'+(a.type==='order'?'🛒':'⚡')+'</div><div class="activity-body"><b>'+esc(a.title)+'</b><p>'+esc(a.detail||'')+'</p></div><span class="activity-time">'+esc(a.time||'')+'</span></div>').join(''):'<div class="empty">Your recent activity will appear here.</div>'
-  }
-
-  setText('adminFavorites',getFavorites().length);
-  setText('adminCustomServices',getCustomServices().length);
-  setText('adminUnread',getNotifications().filter(n=>!n.read).length);
-});
-// Amar Shop admin backup and maintenance
-document.addEventListener('DOMContentLoaded',()=>{
-  const path=currentPath(),s=getSettings();
-
-  if(s.maintenanceMode&&path!=='admin.html'){
-    const main=document.querySelector('main.page');
-    if(main){
-      const banner=document.createElement('div');banner.className='alert';
-      banner.innerHTML='<b>Maintenance Mode</b> — Ordering and new registration are temporarily paused while the site is being updated.';
-      main.prepend(banner)
-    }
-  }
-
-  const importInput=document.getElementById('adminImportFile');
-  if(importInput) importInput.addEventListener('change',async()=>{
-    const file=importInput.files&&importInput.files[0];if(!file)return;
-    try{
-      const data=JSON.parse(await file.text());
-      if(data.settings)localStorage.setItem('siteSettings',JSON.stringify(data.settings));
-      if(data.profile)localStorage.setItem('demoProfile',JSON.stringify(data.profile));
-      if(data.services)localStorage.setItem('customServices',JSON.stringify(data.services));
-      if(data.orders)localStorage.setItem('demoOrders',JSON.stringify(data.orders));
-      if(data.refills)localStorage.setItem('demoRefills',JSON.stringify(data.refills));
-      if(data.favorites)localStorage.setItem('favoriteServices',JSON.stringify(data.favorites));
-      if(data.activity)localStorage.setItem('amarActivity',JSON.stringify(data.activity));
-      if(data.notifications)localStorage.setItem('amarNotifications',JSON.stringify(data.notifications));
-      showToast('Backup imported.');setTimeout(()=>location.reload(),500)
-    }catch(err){showToast('Invalid backup file.')}
-  });
-
-  const reset=document.getElementById('adminResetPreview');
-  if(reset) reset.addEventListener('click',()=>{
-    if(!confirm('Reset all local preview data for Amar Shop in this browser?'))return;
-    ['siteSettings','demoProfile','customServices','demoOrders','demoRefills','favoriteServices','amarActivity','amarNotifications','demoSession'].forEach(k=>localStorage.removeItem(k));
-    showToast('Preview data reset.');setTimeout(()=>location.reload(),500)
-  });
+ updateHeader();globalSearch();renderHome();renderShop();renderProduct();renderCart();renderWishlist();renderOrders();renderAccount();renderAdmin();checkoutInit();successInit();renderCategories();
+ const login=document.getElementById('loginForm');if(login)login.onsubmit=e=>{e.preventDefault();const email=document.getElementById('loginEmail').value.trim(),pass=document.getElementById('loginPassword').value,p=profile();if((p.email===email||p.phone===email)&&p.password===pass){save('shopSession',{loggedIn:true});location.href='account.html'}else toast('Account not found or password is incorrect')};
+ const reg=document.getElementById('registerForm');if(reg)reg.onsubmit=e=>{e.preventDefault();const name=document.getElementById('regName').value.trim(),email=document.getElementById('regEmail').value.trim(),phone=document.getElementById('regPhone').value.trim(),password=document.getElementById('regPassword').value;if(!name||!email||!phone||password.length<6){toast('Please complete all fields');return}save('shopProfile',{name,email,phone,password});save('shopSession',{loggedIn:true});location.href='account.html'};
+ const account=document.getElementById('accountForm');if(account)account.onsubmit=e=>{e.preventDefault();save('shopProfile',{...profile(),name:document.getElementById('accName').value.trim(),email:document.getElementById('accEmail').value.trim(),phone:document.getElementById('accPhone').value.trim(),address:document.getElementById('accAddress').value.trim(),city:document.getElementById('accCity').value.trim()});toast('Profile saved');updateHeader()};
+ const seller=document.getElementById('sellerProductForm');if(seller)seller.onsubmit=e=>{e.preventDefault();const fd=new FormData(seller),list=customProducts();const id=Date.now().toString().slice(-8);list.unshift({id:Number(id),name:fd.get('name'),cat:fd.get('cat'),price:Number(fd.get('price')),old:Number(fd.get('old')||0),rating:5,sold:0,stock:Number(fd.get('stock')),emoji:fd.get('emoji')||'📦',seller:fd.get('seller')||'Marketplace Seller',tag:'New Listing',desc:fd.get('desc')||'Marketplace product',custom:true});save('shopProducts',list);toast('Product listed');seller.reset()};
+ const adminSettings=document.getElementById('adminSettingsForm');if(adminSettings)adminSettings.onsubmit=e=>{e.preventDefault();save('shopSettings',{name:document.getElementById('adminStoreName').value.trim()||'Amar Shop',announcement:document.getElementById('adminAnnouncement').value.trim(),supportEmail:document.getElementById('adminSupportEmail').value.trim(),supportPhone:document.getElementById('adminSupportPhone').value.trim(),freeShipping:Number(document.getElementById('adminFreeShipping').value||1500),maintenance:document.getElementById('adminMaintenance').checked});toast('Store settings saved');updateHeader()};
+ const adminProduct=document.getElementById('adminProductForm');if(adminProduct)adminProduct.onsubmit=e=>{e.preventDefault();const fd=new FormData(adminProduct),list=customProducts();list.unshift({id:Number(Date.now().toString().slice(-8)),name:fd.get('name'),cat:fd.get('cat'),price:Number(fd.get('price')),old:Number(fd.get('old')||0),rating:5,sold:0,stock:Number(fd.get('stock')),emoji:fd.get('emoji')||'📦',seller:fd.get('seller')||store().name,tag:fd.get('tag')||'New',desc:fd.get('desc')||'Marketplace product',custom:true});save('shopProducts',list);toast('Product added');adminProduct.reset();renderAdmin()};
+ const path=location.pathname.split('/').pop()||'index.html',s=store();if(s.maintenance&&!['admin.html','login.html'].includes(path)){const n=document.createElement('div');n.className='notice';n.textContent='Store maintenance is enabled. Shopping features may be temporarily limited.';document.querySelector('.page')?.prepend(n)}
 });
