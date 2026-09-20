@@ -426,3 +426,259 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   }
 });
+// Amar Shop Large Platform Experience v3
+const PLATFORM_PAGES=[
+  {href:'dashboard.html',label:'Home',icon:'⌂',group:'Explore',keywords:'home dashboard overview'},
+  {href:'discover.html',label:'Discover',icon:'◈',group:'Explore',keywords:'discover browse popular services'},
+  {href:'favorites.html',label:'Favorites',icon:'♡',group:'Explore',keywords:'favorites saved services'},
+  {href:'wallet.html',label:'Wallet',icon:'৳',group:'Finance',keywords:'wallet balance funds'},
+  {href:'transactions.html',label:'Transactions',icon:'⇄',group:'Finance',keywords:'transactions payments history'},
+  {href:'activity.html',label:'Activity',icon:'◷',group:'Account',keywords:'activity history actions'},
+  {href:'notifications.html',label:'Notifications',icon:'♢',group:'Account',keywords:'notifications alerts updates'},
+  {href:'security.html',label:'Security',icon:'⌾',group:'Account',keywords:'security password sessions'},
+  {href:'help-center.html',label:'Help Center',icon:'?',group:'Help',keywords:'help guides support'},
+  {href:'faq.html',label:'FAQ',icon:'Q',group:'Help',keywords:'frequently asked questions'},
+  {href:'status.html',label:'System Status',icon:'●',group:'Help',keywords:'status uptime systems'},
+  {href:'about.html',label:'About',icon:'i',group:'Company',keywords:'about company platform'},
+  {href:'contact.html',label:'Contact',icon:'✉',group:'Company',keywords:'contact email telegram'},
+  {href:'terms.html',label:'Terms',icon:'§',group:'Company',keywords:'terms conditions policy'},
+  {href:'privacy.html',label:'Privacy',icon:'◇',group:'Company',keywords:'privacy data'}
+];
+
+function esc(v){
+  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
+}
+function currentPath(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
+function getFavorites(){return safeParse('favoriteServices',[]).map(String)}
+function saveFavorites(v){localStorage.setItem('favoriteServices',JSON.stringify([...new Set(v.map(String))]))}
+function toggleFavorite(id){
+  const fav=getFavorites(),sid=String(id),next=fav.includes(sid)?fav.filter(x=>x!==sid):[...fav,sid];
+  saveFavorites(next);return next.includes(sid)
+}
+function getNotifications(){
+  const existing=safeParse('amarNotifications',null);
+  if(existing)return existing;
+  const seed=[
+    {id:'n1',icon:'✨',title:'Welcome to Amar Shop',text:'Your account dashboard is ready to use.',time:'Today',read:false,href:'dashboard.html'},
+    {id:'n2',icon:'⚡',title:'Fast order workflow',text:'Choose a platform and submit an order from New Order.',time:'Today',read:false,href:'index.html'},
+    {id:'n3',icon:'🛟',title:'Support center',text:'Need help? Open the Help Center or Support page.',time:'Today',read:true,href:'help-center.html'}
+  ];
+  localStorage.setItem('amarNotifications',JSON.stringify(seed));return seed
+}
+function saveNotifications(v){localStorage.setItem('amarNotifications',JSON.stringify(v))}
+function markNotificationsRead(){
+  const n=getNotifications().map(x=>({...x,read:true}));saveNotifications(n);renderHeaderNotifications();renderNotificationsPage()
+}
+function addActivity(type,title,detail){
+  const list=safeParse('amarActivity',[]);
+  list.unshift({id:Date.now(),type,title,detail,time:new Date().toLocaleString()});
+  localStorage.setItem('amarActivity',JSON.stringify(list.slice(0,100)))
+}
+function getActivity(){
+  const own=safeParse('amarActivity',[]);
+  const orderItems=demoOrders().map(o=>({id:'o'+o.id,type:'order',title:'Order #'+o.id,detail:o.service+' • '+o.status,time:o.created}));
+  return [...own,...orderItems].sort((a,b)=>String(b.id).localeCompare(String(a.id)))
+}
+function platformEmoji(platform){
+  return ({youtube:'▶️',facebook:'f',instagram:'◎',tiktok:'♪',telegram:'➤',twitter:'𝕏',linkedin:'in',discord:'◉',spotify:'◉',twitch:'◫',soundcloud:'☁',webtraffic:'↗'})[platform]||'★'
+}
+function serviceCard(s){
+  const fav=getFavorites().includes(String(s.id));
+  return '<article class="market-card" data-service-card="'+esc(s.id)+'">'+
+    '<button class="fav-btn'+(fav?' active':'')+'" data-favorite-service="'+esc(s.id)+'" aria-label="Favorite">'+(fav?'♥':'♡')+'</button>'+
+    '<div class="market-top"><div class="market-logo">'+esc(platformEmoji(s.platform))+'</div><div class="market-title"><b>'+esc(s.name)+'</b><small>'+esc(s.platform)+'</small></div></div>'+
+    '<div class="market-rate">৳'+Number(s.rate).toFixed(2)+' <span>/ 1000</span></div>'+
+    '<div class="muted" style="font-size:12px;line-height:1.5">'+esc(s.desc||'Service available')+'</div>'+
+    '<div class="market-meta"><span class="meta-chip">Min '+esc(s.min)+'</span><span class="meta-chip">Max '+esc(s.max)+'</span><span class="meta-chip">ID '+esc(s.id)+'</span></div>'+
+    '<div style="margin-top:13px"><a class="btn btn-primary" href="index.html?service='+encodeURIComponent(s.id)+'">Order Now</a></div>'+
+  '</article>'
+}
+function renderDiscover(filter='all',query=''){
+  const grid=document.getElementById('discoverGrid');if(!grid)return;
+  const q=query.trim().toLowerCase();
+  const list=allServices().filter(s=>(filter==='all'||s.platform===filter)&&(!q||[s.id,s.name,s.platform,s.desc].join(' ').toLowerCase().includes(q)));
+  grid.innerHTML=list.length?list.map(serviceCard).join(''):'<div class="card empty-state" style="grid-column:1/-1"><div class="quick-icon">⌕</div><b>No services found</b><p class="muted">Try another platform or search term.</p></div>'
+}
+function renderFavorites(){
+  const grid=document.getElementById('favoritesGrid');if(!grid)return;
+  const ids=getFavorites(),list=allServices().filter(s=>ids.includes(String(s.id)));
+  grid.innerHTML=list.length?list.map(serviceCard).join(''):'<div class="card empty-state" style="grid-column:1/-1"><div class="quick-icon">♡</div><b>No favorites yet</b><p class="muted">Save services from Discover to find them quickly here.</p><a class="btn btn-primary" href="discover.html">Discover Services</a></div>'
+}
+function renderTransactions(){
+  const box=document.getElementById('transactionList');if(!box)return;
+  const p=getDemoProfile(),s=getSettings(),orders=demoOrders();
+  const tx=[{icon:'🎁',title:'Starting balance',note:'Account starting balance',amount:Number(p.balance??s.defaultBalance),kind:'in',time:'Account'}];
+  orders.forEach(o=>tx.push({icon:'🛒',title:o.service,note:'Order #'+o.id,amount:-(parseFloat(String(o.charge).replace(/[^0-9.]/g,''))||0),kind:'out',time:o.created}));
+  box.innerHTML=tx.map(t=>'<div class="transaction-item"><div class="tx-icon">'+t.icon+'</div><div class="tx-main"><b>'+esc(t.title)+'</b><small>'+esc(t.note)+' • '+esc(t.time)+'</small></div><div class="tx-amount '+t.kind+'">'+(t.amount>=0?'+':'-')+'৳'+Math.abs(t.amount).toFixed(2)+'</div></div>').join('')
+}
+function renderActivity(){
+  const box=document.getElementById('activityList');if(!box)return;
+  const list=getActivity();
+  box.innerHTML=list.length?list.map(a=>'<div class="activity-item"><div class="activity-badge">'+(a.type==='order'?'🛒':'⚡')+'</div><div class="activity-body"><b>'+esc(a.title)+'</b><p>'+esc(a.detail||'')+'</p></div><span class="activity-time">'+esc(a.time||'')+'</span></div>').join(''):'<div class="empty">No recent activity.</div>'
+}
+function renderNotificationsPage(){
+  const box=document.getElementById('notificationsList');if(!box)return;
+  const list=getNotifications();
+  box.innerHTML=list.map(n=>'<a class="notice-item'+(!n.read?' unread':'')+'" href="'+esc(n.href||'#')+'" data-notification-id="'+esc(n.id)+'"><div class="notice-icon">'+esc(n.icon)+'</div><div class="notice-copy"><b>'+esc(n.title)+'</b><div>'+esc(n.text)+'</div><small>'+esc(n.time)+'</small></div></a>').join('')
+}
+function renderHeaderNotifications(){
+  const btn=document.getElementById('headerNotifications'),pop=document.getElementById('notificationPopover');
+  const list=getNotifications(),unread=list.filter(n=>!n.read).length;
+  if(btn){
+    const dot=btn.querySelector('.notification-dot');
+    if(dot){dot.textContent=unread;dot.style.display=unread?'grid':'none'}
+  }
+  if(pop){
+    pop.innerHTML='<div class="popover-title"><span>Notifications</span><button class="btn btn-outline" id="markAllRead" style="min-height:30px;padding:6px 9px;font-size:10px">Mark read</button></div>'+
+      list.slice(0,5).map(n=>'<a class="notice-item'+(!n.read?' unread':'')+'" href="'+esc(n.href||'#')+'"><div class="notice-icon">'+esc(n.icon)+'</div><div class="notice-copy"><b>'+esc(n.title)+'</b><div>'+esc(n.text)+'</div><small>'+esc(n.time)+'</small></div></a>').join('')+
+      '<div style="padding:8px"><a class="btn btn-primary" style="display:block;text-align:center" href="notifications.html">View all</a></div>';
+    const mark=pop.querySelector('#markAllRead');if(mark)mark.onclick=markNotificationsRead
+  }
+}
+function searchItems(q){
+  q=q.trim().toLowerCase();if(!q)return [];
+  const pages=PLATFORM_PAGES.concat([
+    {href:'index.html',label:'New Order',icon:'＋',keywords:'new order create buy'},
+    {href:'orders.html',label:'Orders',icon:'▤',keywords:'orders history'},
+    {href:'services.html',label:'Services',icon:'★',keywords:'services rates price'},
+    {href:'addfunds.html',label:'Add Funds',icon:'৳',keywords:'add funds payment'}
+  ]).filter(x=>(x.label+' '+x.keywords).toLowerCase().includes(q)).map(x=>({...x,type:'Page'}));
+  const services=allServices().filter(s=>[s.id,s.name,s.platform,s.desc].join(' ').toLowerCase().includes(q)).slice(0,10).map(s=>({href:'index.html?service='+s.id,label:s.name,icon:platformEmoji(s.platform),keywords:'',type:'Service'}));
+  return [...pages,...services].slice(0,15)
+}
+function showSearch(query=''){
+  let overlay=document.getElementById('searchOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');overlay.id='searchOverlay';overlay.className='search-overlay';
+    overlay.innerHTML='<div class="search-modal"><div class="search-modal-head"><span style="font-size:20px">⌕</span><input id="globalSearchInput" placeholder="Search pages, services, tools..."><button class="btn btn-outline" id="closeSearch">Esc</button></div><div class="search-results" id="globalSearchResults"></div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',e=>{if(e.target===overlay)hideSearch()});
+    overlay.querySelector('#closeSearch').onclick=hideSearch;
+    overlay.querySelector('#globalSearchInput').addEventListener('input',e=>renderSearchResults(e.target.value))
+  }
+  overlay.classList.add('show');
+  const input=overlay.querySelector('#globalSearchInput');input.value=query;setTimeout(()=>input.focus(),0);renderSearchResults(query)
+}
+function hideSearch(){const o=document.getElementById('searchOverlay');if(o)o.classList.remove('show')}
+function renderSearchResults(q){
+  const box=document.getElementById('globalSearchResults');if(!box)return;
+  const items=searchItems(q);
+  box.innerHTML=q?items.length?items.map(x=>'<a class="search-result" href="'+esc(x.href)+'"><div class="search-result-icon">'+esc(x.icon||'⌕')+'</div><div class="search-result-text"><b>'+esc(x.label)+'</b><small>'+esc(x.type||'Page')+'</small></div></a>').join(''):'<div class="empty">No results found.</div>':'<div class="empty">Search services, orders, wallet, help and more.</div>'
+}
+
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();showSearch()}
+  if(e.key==='Escape')hideSearch()
+});
+
+document.addEventListener('click',e=>{
+  const fav=e.target.closest('[data-favorite-service]');
+  if(fav){
+    e.preventDefault();
+    const active=toggleFavorite(fav.dataset.favoriteService);
+    fav.classList.toggle('active',active);fav.textContent=active?'♥':'♡';
+    if(currentPath()==='favorites.html')renderFavorites();
+    showToast(active?'Saved to favorites':'Removed from favorites');
+    addActivity('favorite',active?'Service saved':'Favorite removed','Service ID '+fav.dataset.favoriteService)
+  }
+  const n=e.target.closest('[data-notification-id]');
+  if(n){
+    const id=n.dataset.notificationId;
+    saveNotifications(getNotifications().map(x=>x.id===id?{...x,read:true}:x))
+  }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const path=currentPath(),header=document.querySelector('.header'),headerLeft=header&&header.firstElementChild,headerActions=header&&header.querySelector('.header-actions');
+
+  // Large sidebar navigation.
+  const sideNav=document.querySelector('.sidebar .nav');
+  if(sideNav&&!sideNav.querySelector('[data-platform-nav="1"]')){
+    const anchor=[...sideNav.querySelectorAll('.nav-section')].find(x=>x.textContent.trim().toLowerCase()==='session');
+    const frag=document.createDocumentFragment();
+    ['Explore','Finance','Account','Help','Company'].forEach(group=>{
+      const groupItems=PLATFORM_PAGES.filter(x=>x.group===group);
+      if(!groupItems.length)return;
+      const title=document.createElement('div');title.className='nav-section';title.textContent=group;title.dataset.platformNav='1';frag.appendChild(title);
+      groupItems.forEach(x=>{
+        const a=document.createElement('a');a.href=x.href;a.dataset.platformNav='1';a.innerHTML='<span style="display:inline-block;width:19px">'+x.icon+'</span>'+x.label;
+        if(path===x.href)a.classList.add('active');frag.appendChild(a)
+      })
+    });
+    if(anchor)sideNav.insertBefore(frag,anchor);else sideNav.appendChild(frag)
+  }
+
+  // Global search and account controls.
+  if(headerLeft&&!headerLeft.querySelector('.header-search')){
+    const search=document.createElement('div');search.className='header-search';
+    search.innerHTML='<span class="search-ico">⌕</span><input aria-label="Search" placeholder="Search Amar Shop..." readonly><span class="search-kbd">⌘K</span>';
+    search.onclick=()=>showSearch();headerLeft.appendChild(search)
+  }
+  if(headerActions&&!document.getElementById('headerNotifications')){
+    const nb=document.createElement('button');nb.id='headerNotifications';nb.className='header-icon-btn';nb.type='button';nb.innerHTML='♢<span class="notification-dot"></span>';
+    const profileBtn=document.createElement('a');profileBtn.className='profile-chip';profileBtn.href='account.html';profileBtn.innerHTML='<span class="profile-avatar">'+esc((profile.username||'C').slice(0,1).toUpperCase())+'</span><span>'+esc(profile.username||'Account')+'</span>';
+    headerActions.insertBefore(nb,headerActions.firstChild);headerActions.appendChild(profileBtn);
+    const pop=document.createElement('div');pop.id='notificationPopover';pop.className='header-popover';document.body.appendChild(pop);
+    nb.onclick=()=>{pop.classList.toggle('show');renderHeaderNotifications()}
+    document.addEventListener('click',ev=>{if(!pop.contains(ev.target)&&!nb.contains(ev.target))pop.classList.remove('show')})
+  }
+  renderHeaderNotifications();
+
+  // App-style mobile nav.
+  const bottom=document.querySelector('.mobile-bottom-nav');
+  if(bottom){
+    bottom.innerHTML='';
+    [['dashboard.html','⌂','Home'],['discover.html','◈','Explore'],['index.html','＋','Order'],['wallet.html','৳','Wallet']].forEach(([href,ico,label])=>{
+      const a=document.createElement('a');a.href=href;a.innerHTML='<span class="nav-ico">'+ico+'</span><span>'+label+'</span>';if(path===href)a.classList.add('active');bottom.appendChild(a)
+    });
+    const more=document.createElement('button');more.type='button';more.innerHTML='<span class="nav-ico">☰</span><span>Menu</span>';
+    more.onclick=()=>{const s=document.querySelector('.sidebar');if(s)s.classList.add('open');document.body.classList.add('menu-open');const b=document.querySelector('.sidebar-backdrop');if(b)b.classList.add('show')};bottom.appendChild(more)
+  }
+
+  // Footer.
+  const main=document.querySelector('main.page');
+  if(main&&!main.querySelector('.site-footer')){
+    const footer=document.createElement('footer');footer.className='site-footer';
+    footer.innerHTML='<span>© '+new Date().getFullYear()+' '+esc(getSettings().siteName)+' • Social services platform</span><span class="footer-links"><a href="about.html">About</a><a href="help-center.html">Help</a><a href="status.html">Status</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></span>';
+    main.appendChild(footer)
+  }
+
+  // Rich dashboard.
+  if(path==='dashboard.html'&&main&&!main.querySelector('.hero-banner')){
+    const hero=document.createElement('section');hero.className='hero-banner';hero.innerHTML='<h1>Everything you need in one place.</h1><p>Browse services, manage orders, track spending, save favorites and get support from your Amar Shop dashboard.</p><div class="hero-actions"><a class="btn btn-primary" href="index.html">Create Order</a><a class="btn btn-outline" href="discover.html">Discover Services</a></div>';
+    main.insertBefore(hero,main.firstChild);
+    const quick=document.createElement('section');quick.style.marginTop='16px';quick.innerHTML='<div class="quick-grid">'+[
+      ['index.html','＋','New Order','Create a new order'],
+      ['discover.html','◈','Discover','Browse all services'],
+      ['favorites.html','♡','Favorites','Your saved services'],
+      ['wallet.html','৳','Wallet','Balance and funds'],
+      ['activity.html','◷','Activity','Recent actions'],
+      ['help-center.html','?','Help Center','Guides and support']
+    ].map(x=>'<a class="quick-card" href="'+x[0]+'"><div class="quick-icon">'+x[1]+'</div><b>'+x[2]+'</b><small>'+x[3]+'</small></a>').join('')+'</div>';
+    hero.insertAdjacentElement('afterend',quick)
+  }
+
+  if(path==='discover.html'){
+    renderDiscover();
+    document.querySelectorAll('[data-discover-filter]').forEach(btn=>btn.onclick=()=>{
+      document.querySelectorAll('[data-discover-filter]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
+      renderDiscover(btn.dataset.discoverFilter,document.getElementById('discoverSearch')?.value||'')
+    });
+    const ds=document.getElementById('discoverSearch');if(ds)ds.oninput=()=>{const active=document.querySelector('[data-discover-filter].active');renderDiscover(active?.dataset.discoverFilter||'all',ds.value)}
+  }
+  if(path==='favorites.html')renderFavorites();
+  if(path==='transactions.html'||path==='wallet.html')renderTransactions();
+  if(path==='activity.html')renderActivity();
+  if(path==='notifications.html')renderNotificationsPage();
+
+  document.querySelectorAll('.faq-q').forEach(q=>q.onclick=()=>q.closest('.faq-item').classList.toggle('open'));
+
+  const contactForm=document.getElementById('contactForm');
+  if(contactForm)contactForm.onsubmit=e=>{e.preventDefault();addActivity('support','Contact message prepared',document.getElementById('contactSubject')?.value||'Message');showToast('Message saved in preview mode.');contactForm.reset()};
+
+  const serviceParam=new URLSearchParams(location.search).get('service');
+  if(path==='index.html'&&serviceParam&&svc){
+    const found=allServices().find(s=>String(s.id)===String(serviceParam));
+    if(found&&cat){cat.value=found.platform;updateServices();svc.value=String(found.id);updateInfo();setTimeout(()=>document.getElementById('orderForm')?.scrollIntoView({behavior:'smooth',block:'center'}),150)}
+  }
+});
