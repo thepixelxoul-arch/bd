@@ -415,3 +415,82 @@ textarea.form-control{resize:vertical;line-height:1.5}
   .admin-service-form{grid-template-columns:1fr}
   .admin-service-form .wide,.admin-service-form .full{grid-column:auto}
 }
+
+/* Premium platform selector */
+.platform-card{padding:20px}
+.platform-title{margin-bottom:16px}
+.platform-title h2{margin:0 0 4px;font-size:20px}
+.platform-subtitle{font-size:12px}
+.platforms{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+}
+.platform{
+  min-width:0;
+  min-height:66px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  padding:10px 12px;
+  border:1px solid #eadfd9;
+  border-radius:13px;
+  background:linear-gradient(180deg,#ffffff,#fffdfa);
+  color:#201821;
+  box-shadow:0 5px 14px rgba(63,33,49,.05);
+  font-size:14px;
+  font-weight:800;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.platform:hover{
+  transform:translateY(-2px);
+  border-color:#ffb58c;
+  background:linear-gradient(180deg,#fff,#fff8f3);
+  box-shadow:0 9px 22px rgba(126,53,24,.10);
+}
+.platform.active{
+  background:linear-gradient(105deg,#f85606,#ff6b10 52%,#f31e7a);
+  border-color:transparent;
+  color:#fff;
+  box-shadow:0 10px 24px rgba(248,86,6,.20);
+}
+.platform-icon-wrap{
+  width:36px;height:36px;flex:0 0 36px;
+  display:grid;place-items:center;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.055);
+  box-shadow:0 3px 9px rgba(0,0,0,.08);
+}
+.platform-icon{width:22px;height:22px;display:block;object-fit:contain}
+.platform-emoji{font-size:21px;line-height:1}
+.platform-label{
+  min-width:0;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.platform-chevron{
+  flex:none;
+  font-size:24px;
+  line-height:1;
+  color:#a69ca6;
+  font-weight:500;
+  transform:translateY(-1px);
+}
+.platform.active .platform-chevron{color:rgba(255,255,255,.82)}
+@media(max-width:1200px){
+  .platforms{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:820px){
+  .platforms{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .platform-card{padding:13px}
+  .platform-title{align-items:flex-start}
+  .platform-title .pill{display:none}
+  .platforms{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .platform{min-height:58px;padding:8px 9px;gap:8px;font-size:12px;border-radius:12px}
+  .platform-icon-wrap{width:32px;height:32px;flex-basis:32px;border-radius:9px}
+  .platform-icon{width:20px;height:20px}
+  .platform-chevron{font-size:20px}
+}
