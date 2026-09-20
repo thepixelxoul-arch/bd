@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f85606">
+<title>Admin Panel - Amar Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-logo">AS</div><div>Amar Shop</div></div>
+    <div class="user-card">
+      <small>Admin workspace</small>
+      <div style="font-weight:800;margin-top:4px">Demo Admin</div>
+      <div class="balance">Control Panel</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Store</div>
+      <a href="index.html">New Order</a>
+      <a href="orders.html">Orders</a>
+      <a href="services.html">Services</a>
+      <a href="addfunds.html">Add Funds</a>
+      <a href="massorder.html">Mass Order</a>
+      <a href="tickets.html">Support</a>
+      <a href="refill.html">Refill</a>
+      <a href="affiliates.html">Affiliates</a>
+      <a href="child-panels.html">Child Panels</a>
+      <a href="api.html">API</a>
+      <a href="updates.html">Updates</a>
+      <a href="recently-completed.html">Recently Completed</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="account.html">Account</a>
+      <div class="nav-section">Management</div>
+      <a class="active" href="admin.html">Admin Panel</a>
+      <div class="nav-section">Session</div>
+      <a href="login.html">Login</a>
+      <a href="#" class="logout-link" data-logout>Logout</a>
+    </nav>
+  </aside>
+
+  <div class="content">
+    <header class="header">
+      <div><button class="btn btn-outline mobile-toggle" data-menu-toggle>☰</button></div>
+      <div class="header-actions">
+        <button class="btn btn-outline" data-theme-toggle>Theme</button>
+        <a class="btn btn-primary" href="index.html">View Shop</a>
+      </div>
+    </header>
+
+    <main class="page">
+      <h1 class="page-title">Admin Panel</h1>
+      <p class="page-subtitle">Manage the browser-local Amar Shop demo from one place.</p>
+
+      <div class="admin-login-note">
+        This is a frontend demo admin panel. GitHub Pages cannot securely protect an admin page or secret API keys. Real admin login, database access and payment controls need a backend.
+      </div>
+
+      <div class="admin-grid" style="margin-top:16px">
+        <div class="card stat"><span>Demo Users</span><h3 id="adminUsers">0</h3></div>
+        <div class="card stat"><span>Total Orders</span><h3 id="adminOrders">0</h3></div>
+        <div class="card stat"><span>Total Revenue</span><h3 id="adminRevenue">৳0.00</h3></div>
+        <div class="card stat"><span>Pending Orders</span><h3 id="adminPending">0</h3></div>
+      </div>
+
+      <div class="grid two-col" style="margin-top:16px">
+        <section class="card">
+          <div class="admin-panel-title">
+            <h2>Demo User</h2>
+            <span class="pill">Local browser</span>
+          </div>
+          <div class="admin-list">
+            <div class="admin-row">
+              <div class="meta"><small>Username</small><b id="adminUsername">No demo user</b></div>
+            </div>
+            <div class="admin-row">
+              <div class="meta"><small>Email</small><b id="adminEmail">No email</b></div>
+            </div>
+            <div class="admin-row">
+              <div class="meta"><small>Refill Requests</small><b id="adminRefills">0</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="admin-panel-title"><h2>Balance Control</h2></div>
+          <form id="adminBalanceForm">
+            <div class="form-group">
+              <label>Demo Balance (BDT)</label>
+              <input id="adminBalance" class="form-control" type="number" min="0" step="0.01" value="500">
+            </div>
+            <button class="btn btn-primary" style="width:100%">Update Demo Balance</button>
+          </form>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:16px">
+        <div class="admin-panel-title">
+          <h2>Order Management</h2>
+          <div class="admin-actions">
+            <button id="adminExportData" class="btn btn-outline">Export Data</button>
+            <button id="adminClearOrders" class="btn btn-outline">Clear Demo Orders</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Service</th><th>Qty</th><th>Charge</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="adminOrdersBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid three-col" style="margin-top:16px">
+        <section class="card">
+          <h2 style="margin-top:0">Services</h2>
+          <p class="muted">Manage your demo service catalog and pricing structure.</p>
+          <a class="btn btn-primary" href="services.html">Open Services</a>
+        </section>
+        <section class="card">
+          <h2 style="margin-top:0">Support</h2>
+          <p class="muted">Review the support area and prepare a real ticket workflow later.</p>
+          <a class="btn btn-primary" href="tickets.html">Open Support</a>
+        </section>
+        <section class="card">
+          <h2 style="margin-top:0">System</h2>
+          <p class="muted">API, payments and secure admin access will require a backend.</p>
+          <a class="btn btn-primary" href="api.html">API Setup</a>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
