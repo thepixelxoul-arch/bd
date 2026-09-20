@@ -18,7 +18,7 @@ if(cat)cat.addEventListener('change',updateServices);if(svc)svc.addEventListener
 document.querySelectorAll('.platform').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.platform').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(btn.dataset.platform!=='all'&&cat){cat.value=btn.dataset.platform;cat.dispatchEvent(new Event('change'))}}));
 const form=document.getElementById('orderForm');
 if(form)form.addEventListener('submit',e=>{e.preventDefault();const link=document.getElementById('link').value.trim(),s=currentService(),q=Number(qty.value||0);if(!link||!s||q<s.min||q>s.max){alert('Please enter a valid link and quantity.');return}const orders=JSON.parse(localStorage.getItem('demoOrders')||'[]');orders.unshift({id:Math.floor(Date.now()/1000),service:s.name,qty:q,charge:charge.value,status:'Pending',created:new Date().toLocaleString()});localStorage.setItem('demoOrders',JSON.stringify(orders));alert('Demo order saved in this browser.');form.reset();updateServices()});
-const tbody=document.getElementById('ordersBody');if(tbody){const orders=JSON.parse(localStorage.getItem('demoOrders')||'[]');tbody.innerHTML=orders.length?orders.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td>'+o.created+'</td></tr>').join(''):'<tr><td colspan="6" class="muted">No demo orders yet.</td></tr>'}
+const tbody=document.getElementById('ordersBody');if(tbody){const orders=JSON.parse(localStorage.getItem('demoOrders')||'[]');tbody.innerHTML=orders.length?orders.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td>'+o.created+'</td><td>'+(o.status==='Completed'?'—':'<button class="btn btn-outline" data-complete-order="'+o.id+'">Complete</button>')+'</td></tr>').join(''):'<tr><td colspan="7" class="muted">No demo orders yet.</td></tr>'}
 // Extended demo functionality
 function showToast(msg){const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2200)}
 function getDemoProfile(){try{return JSON.parse(localStorage.getItem('demoProfile')||'{}')}catch(e){return{}}}
@@ -35,8 +35,8 @@ document.querySelectorAll('[data-logout]').forEach(el=>el.addEventListener('clic
 document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{const target=document.querySelector(btn.dataset.copy);if(!target)return;try{await navigator.clipboard.writeText(target.value||target.textContent);showToast('Copied')}catch(e){showToast('Copy failed')}}));
 
 const profile=getDemoProfile();
-document.querySelectorAll('[data-demo-username]').forEach(el=>el.textContent=profile.username||'demo_user');
-document.querySelectorAll('[data-demo-email]').forEach(el=>el.value=profile.email||'demo@example.com');
+document.querySelectorAll('[data-demo-username]').forEach(el=>{if(el.matches('input,textarea'))el.value=profile.username||'demo_user';else el.textContent=profile.username||'demo_user'});
+document.querySelectorAll('[data-demo-email]').forEach(el=>{if(el.matches('input,textarea'))el.value=profile.email||'demo@example.com';else el.textContent=profile.email||'demo@example.com'});
 document.querySelectorAll('[data-demo-balance]').forEach(el=>el.textContent='৳'+Number(profile.balance??500).toFixed(2));
 
 const dashOrders=demoOrders();
@@ -55,3 +55,18 @@ if(recentBody){const done=dashOrders.filter(o=>o.status==='Completed');recentBod
 
 const accountForm=document.getElementById('accountForm');
 if(accountForm)accountForm.addEventListener('submit',e=>{e.preventDefault();const p=getDemoProfile();p.username=document.getElementById('accountUsername').value.trim()||p.username||'demo_user';p.email=document.getElementById('accountEmail').value.trim()||p.email||'demo@example.com';setDemoProfile(p);showToast('Demo profile saved.');setTimeout(()=>location.reload(),500)});
+
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-complete-order]');
+  if(!btn)return;
+  const id=String(btn.dataset.completeOrder);
+  const orders=demoOrders();
+  const found=orders.find(o=>String(o.id)===id);
+  if(found){found.status='Completed';localStorage.setItem('demoOrders',JSON.stringify(orders));showToast('Order marked completed.');setTimeout(()=>location.reload(),400)}
+});
+
+const serviceSearch=document.getElementById('serviceSearch');
+if(serviceSearch)serviceSearch.addEventListener('input',()=>{
+  const q=serviceSearch.value.trim().toLowerCase();
+  document.querySelectorAll('#servicesTable tbody tr').forEach(row=>{row.style.display=row.textContent.toLowerCase().includes(q)?'':'none'})
+});
