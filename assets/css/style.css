@@ -340,3 +340,5 @@ textarea.form-control{resize:vertical;line-height:1.5}
   .service-info{grid-template-columns:1fr}
   .header-actions .btn-primary{display:none}
 }
+
+.header-left{display:flex;align-items:center;gap:10px;min-width:0}
