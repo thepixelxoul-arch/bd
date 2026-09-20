@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 // Amar Shop Large Platform Experience v3
 const PLATFORM_PAGES=[
-  {href:'dashboard.html',label:'Home',icon:'⌂',group:'Explore',keywords:'home dashboard overview'},
+  {href:'dashboard.html',label:'Home',icon:'⌂',group:'Core',keywords:'home dashboard overview'},
   {href:'discover.html',label:'Discover',icon:'◈',group:'Explore',keywords:'discover browse popular services'},
   {href:'favorites.html',label:'Favorites',icon:'♡',group:'Explore',keywords:'favorites saved services'},
   {href:'wallet.html',label:'Wallet',icon:'৳',group:'Finance',keywords:'wallet balance funds'},
@@ -681,4 +681,23 @@ document.addEventListener('DOMContentLoaded',()=>{
     const found=allServices().find(s=>String(s.id)===String(serviceParam));
     if(found&&cat){cat.value=found.platform;updateServices();svc.value=String(found.id);updateInfo();setTimeout(()=>document.getElementById('orderForm')?.scrollIntoView({behavior:'smooth',block:'center'}),150)}
   }
+});
+// Amar Shop dashboard and support polish
+document.addEventListener('DOMContentLoaded',()=>{
+  const s=getSettings();
+  document.querySelectorAll('[data-support-email]').forEach(el=>el.textContent=s.supportEmail||'Not configured');
+  document.querySelectorAll('[data-support-telegram]').forEach(el=>el.textContent=s.supportTelegram||'Not configured');
+
+  const popular=document.getElementById('dashboardPopular');
+  if(popular) popular.innerHTML=allServices().slice(0,3).map(serviceCard).join('');
+
+  const feed=document.getElementById('dashboardActivity');
+  if(feed){
+    const list=getActivity().slice(0,6);
+    feed.innerHTML=list.length?list.map(a=>'<div class="activity-item"><div class="activity-badge">'+(a.type==='order'?'🛒':'⚡')+'</div><div class="activity-body"><b>'+esc(a.title)+'</b><p>'+esc(a.detail||'')+'</p></div><span class="activity-time">'+esc(a.time||'')+'</span></div>').join(''):'<div class="empty">Your recent activity will appear here.</div>'
+  }
+
+  setText('adminFavorites',getFavorites().length);
+  setText('adminCustomServices',getCustomServices().length);
+  setText('adminUnread',getNotifications().filter(n=>!n.read).length);
 });
