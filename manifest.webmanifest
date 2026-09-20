@@ -1,0 +1,9 @@
+{
+  "name": "Amar Shop",
+  "short_name": "Amar Shop",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f6fb",
+  "theme_color": "#f85606",
+  "icons": []
+}
