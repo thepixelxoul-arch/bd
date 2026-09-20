@@ -70,3 +70,56 @@ if(serviceSearch)serviceSearch.addEventListener('input',()=>{
   const q=serviceSearch.value.trim().toLowerCase();
   document.querySelectorAll('#servicesTable tbody tr').forEach(row=>{row.style.display=row.textContent.toLowerCase().includes(q)?'':'none'})
 });
+
+
+// Amar Shop responsive navigation enhancements
+document.addEventListener('DOMContentLoaded',()=>{
+  const header=document.querySelector('.header');
+  const side=document.querySelector('.sidebar');
+  const toggle=document.querySelector('[data-menu-toggle]');
+  const theme=document.querySelector('[data-theme-toggle]');
+
+  if(header){
+    const left=header.firstElementChild;
+    if(left){
+      left.classList.add('header-left');
+      if(!left.querySelector('.mobile-brand')){
+        const brand=document.createElement('a');
+        brand.href='index.html';
+        brand.className='mobile-brand';
+        brand.innerHTML='<span class="mini-logo">AS</span><span>Amar Shop</span>';
+        left.appendChild(brand);
+      }
+    }
+  }
+
+  let backdrop=document.querySelector('.sidebar-backdrop');
+  if(!backdrop){
+    backdrop=document.createElement('div');
+    backdrop.className='sidebar-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  function syncMenu(){
+    const opened=side&&side.classList.contains('open');
+    backdrop.classList.toggle('show',!!opened);
+    document.body.classList.toggle('menu-open',!!opened);
+  }
+  function closeMenu(){
+    if(side)side.classList.remove('open');
+    syncMenu();
+  }
+
+  if(toggle)toggle.addEventListener('click',()=>setTimeout(syncMenu,0));
+  backdrop.addEventListener('click',closeMenu);
+  document.querySelectorAll('.sidebar .nav a').forEach(a=>a.addEventListener('click',()=>{
+    if(window.innerWidth<=1100)closeMenu();
+  }));
+  window.addEventListener('resize',()=>{if(window.innerWidth>1100)closeMenu()});
+
+  function syncThemeLabel(){
+    if(theme)theme.textContent=document.body.classList.contains('dark')?'☀️ Light':'🌙 Dark';
+  }
+  syncThemeLabel();
+  if(theme)theme.addEventListener('click',()=>setTimeout(syncThemeLabel,0));
+});
