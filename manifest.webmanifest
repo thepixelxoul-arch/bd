@@ -1,9 +1,9 @@
 {
-  "name": "Amar Shop",
+  "name": "Amar Shop Marketplace",
   "short_name": "Amar Shop",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f7f6fb",
+  "background_color": "#f7f7f8",
   "theme_color": "#f85606",
-  "icons": []
+  "description": "Multi-category online shopping marketplace preview"
 }
