@@ -272,3 +272,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   setupSearchSuggestions();setupDynamicTimer();renderRecent();setupAdvancedProduct();renderCartSummary();
   document.querySelectorAll('[data-coupon-code]').forEach(input=>input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon(input.value)}}))
 });
+
+// Mobile marketplace search
+document.addEventListener('DOMContentLoaded',()=>{
+  const header=document.querySelector('.site-header');
+  if(header&&!header.querySelector('.mobile-search-box')){
+    const box=document.createElement('div');box.className='mobile-search-box';
+    box.innerHTML='<form id="mobileSearchForm"><span class="m-search-icon">⌕</span><input placeholder="Search products..."><button>→</button></form>';
+    header.appendChild(box);
+    const form=box.querySelector('form'),input=box.querySelector('input');
+    form.addEventListener('submit',e=>{e.preventDefault();const q=input.value.trim();location.href='shop.html'+(q?'?q='+encodeURIComponent(q):'')});
+    input.addEventListener('input',()=>{const desktop=document.querySelector('#globalSearch input');if(desktop)desktop.value=input.value});
+  }
+});
