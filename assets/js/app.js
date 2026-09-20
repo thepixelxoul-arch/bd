@@ -386,3 +386,23 @@ document.addEventListener('click',e=>{
   const ds=e.target.closest('[data-delete-service]');
   if(ds){const id=String(ds.dataset.deleteService);localStorage.setItem('customServices',JSON.stringify(getCustomServices().filter(s=>String(s.id)!==id)));showToast('Service deleted.');setTimeout(()=>location.reload(),350)}
 });
+
+
+// Official support/contact rendering
+document.addEventListener('DOMContentLoaded',()=>{
+  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  const s=getSettings();
+  if(path==='tickets.html'){
+    const cards=document.querySelectorAll('main.page .card');
+    const supportCard=[...cards].find(card=>/Contact options/i.test(card.textContent));
+    if(supportCard){
+      const timeline=supportCard.querySelector('.timeline');
+      if(timeline){
+        timeline.innerHTML=
+          '<div class="timeline-item"><b>Email Support</b><div class="muted">'+(s.supportEmail||'Not configured')+'</div></div>'+
+          '<div class="timeline-item"><b>Telegram Support</b><div class="muted">'+(s.supportTelegram||'Not configured')+'</div></div>'+
+          '<div class="timeline-item"><b>Support Status</b><div class="muted">Support center available</div></div>';
+      }
+    }
+  }
+});
