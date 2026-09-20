@@ -66,6 +66,7 @@
       <div class="form-group"><label>Website Announcement</label><textarea id="siteAnnouncement" class="form-control" rows="3" placeholder="Write an announcement for customers"></textarea></div>
       <div class="toggle-row"><div><b>Accept New Orders</b><div class="mini-note">Turn the New Order and Mass Order submission on or off.</div></div><label class="switch"><input id="siteOrdersEnabled" type="checkbox"><span class="slider"></span></label></div>
       <div class="toggle-row"><div><b>Allow Registration</b><div class="mini-note">Turn new account registration on or off.</div></div><label class="switch"><input id="siteRegistrationEnabled" type="checkbox"><span class="slider"></span></label></div>
+      <div class="toggle-row"><div><b>Maintenance Mode</b><div class="mini-note">Pause new orders and registration while updating the site.</div></div><label class="switch"><input id="siteMaintenanceMode" type="checkbox"><span class="slider"></span></label></div>
       <button class="btn btn-primary" style="margin-top:14px">Save Website Settings</button>
     </form>
   </section>
@@ -104,7 +105,16 @@
   </section>
 
   <section class="card" style="margin-top:16px">
-    <div class="admin-panel-title"><h2>Order Management</h2><div class="admin-actions"><button id="adminExportData" class="btn btn-outline">Export Data</button><button id="adminClearOrders" class="btn btn-outline">Clear Orders</button></div></div>
+    <div class="admin-panel-title"><h2>Backup & Maintenance</h2><span class="pill">Admin tools</span></div>
+    <p class="mini-note">Export all local preview data as JSON, restore a previous backup, or reset this browser's preview data.</p>
+    <div class="admin-actions" style="margin-top:12px">
+      <button id="adminExportData" class="btn btn-primary">Export Backup</button>
+      <label class="btn btn-outline" style="display:inline-flex;align-items:center;cursor:pointer">Import Backup<input id="adminImportFile" type="file" accept="application/json,.json" hidden></label>
+      <button id="adminResetPreview" class="btn btn-outline">Reset Preview Data</button>
+    </div>
+  </section>
+  <section class="card" style="margin-top:16px">
+    <div class="admin-panel-title"><h2>Order Management</h2><div class="admin-actions"><button id="adminClearOrders" class="btn btn-outline">Clear Orders</button></div></div>
     <div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Service</th><th>Qty</th><th>Charge</th><th>Status</th><th>Action</th></tr></thead><tbody id="adminOrdersBody"></tbody></table></div>
   </section>
 </main>
