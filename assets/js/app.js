@@ -9,7 +9,8 @@ const DEFAULT_SETTINGS={
   registrationEnabled:true,
   defaultBalance:500,
   supportEmail:'support@example.com',
-  supportTelegram:'@amarshop'
+  supportTelegram:'@amarshop',
+  maintenanceMode:false
 };
 
 const DEFAULT_SERVICES={
@@ -149,13 +150,13 @@ document.querySelectorAll('.platform').forEach(btn=>btn.addEventListener('click'
 
 const orderForm=document.getElementById('orderForm');
 if(orderForm){
-  if(!settings.ordersEnabled){
+  if(!settings.ordersEnabled||settings.maintenanceMode){
     const b=orderForm.querySelector('button[type="submit"],button:not([type])');
     if(b){b.disabled=true;b.textContent='Orders temporarily unavailable'}
   }
   orderForm.addEventListener('submit',e=>{
     e.preventDefault();
-    if(!settings.ordersEnabled){showToast('Orders are temporarily unavailable.');return}
+    if(!settings.ordersEnabled||settings.maintenanceMode){showToast('Orders are temporarily unavailable.');return}
     const link=document.getElementById('link').value.trim(),s=currentService(),q=Number(qty.value||0);
     if(!link||!s||q<s.min||q>s.max){showToast('Enter a valid link and quantity.');return}
     const orders=demoOrders();
@@ -183,7 +184,7 @@ document.addEventListener('click',e=>{
 
 const regForm=document.getElementById('registerForm');
 if(regForm){
-  if(!settings.registrationEnabled){
+  if(!settings.registrationEnabled||settings.maintenanceMode){
     regForm.innerHTML='<div class="alert">New registration is temporarily disabled.</div>'
   }else{
     regForm.addEventListener('submit',e=>{
@@ -338,6 +339,7 @@ function initAdmin(){
   Object.entries(map).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v});
   const ordersToggle=document.getElementById('siteOrdersEnabled');if(ordersToggle)ordersToggle.checked=!!s.ordersEnabled;
   const regToggle=document.getElementById('siteRegistrationEnabled');if(regToggle)regToggle.checked=!!s.registrationEnabled;
+  const maintenanceToggle=document.getElementById('siteMaintenanceMode');if(maintenanceToggle)maintenanceToggle.checked=!!s.maintenanceMode;
 
   const tbody=document.getElementById('adminOrdersBody');
   if(tbody)tbody.innerHTML=orders.length?orders.map(o=>'<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td><div class="admin-actions">'+(o.status==='Completed'?'':'<button class="btn btn-outline" data-admin-complete="'+o.id+'">Complete</button>')+'<button class="btn btn-outline" data-admin-delete="'+o.id+'">Delete</button></div></td></tr>').join(''):'<tr><td colspan="6"><div class="empty">No orders yet.</div></td></tr>';
@@ -352,7 +354,8 @@ function initAdmin(){
       supportTelegram:document.getElementById('siteSupportTelegram').value.trim(),
       defaultBalance:Math.max(0,Number(document.getElementById('siteDefaultBalance').value||0)),
       ordersEnabled:document.getElementById('siteOrdersEnabled').checked,
-      registrationEnabled:document.getElementById('siteRegistrationEnabled').checked
+      registrationEnabled:document.getElementById('siteRegistrationEnabled').checked,
+      maintenanceMode:document.getElementById('siteMaintenanceMode')?.checked||false
     });
     showToast('Website settings saved.');setTimeout(()=>location.reload(),450)
   });
@@ -367,7 +370,7 @@ function initAdmin(){
 
   const exportBtn=document.getElementById('adminExportData');
   if(exportBtn)exportBtn.addEventListener('click',()=>{
-    const payload={settings:getSettings(),profile:getDemoProfile(),services:getCustomServices(),orders:demoOrders(),refills:safeParse('demoRefills',[]),exportedAt:new Date().toISOString()};
+    const payload={settings:getSettings(),profile:getDemoProfile(),services:getCustomServices(),orders:demoOrders(),refills:safeParse('demoRefills',[]),favorites:getFavorites(),activity:safeParse('amarActivity',[]),notifications:getNotifications(),exportedAt:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='amar-shop-data.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Data exported.')
   });
@@ -700,4 +703,41 @@ document.addEventListener('DOMContentLoaded',()=>{
   setText('adminFavorites',getFavorites().length);
   setText('adminCustomServices',getCustomServices().length);
   setText('adminUnread',getNotifications().filter(n=>!n.read).length);
+});
+// Amar Shop admin backup and maintenance
+document.addEventListener('DOMContentLoaded',()=>{
+  const path=currentPath(),s=getSettings();
+
+  if(s.maintenanceMode&&path!=='admin.html'){
+    const main=document.querySelector('main.page');
+    if(main){
+      const banner=document.createElement('div');banner.className='alert';
+      banner.innerHTML='<b>Maintenance Mode</b> — Ordering and new registration are temporarily paused while the site is being updated.';
+      main.prepend(banner)
+    }
+  }
+
+  const importInput=document.getElementById('adminImportFile');
+  if(importInput) importInput.addEventListener('change',async()=>{
+    const file=importInput.files&&importInput.files[0];if(!file)return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(data.settings)localStorage.setItem('siteSettings',JSON.stringify(data.settings));
+      if(data.profile)localStorage.setItem('demoProfile',JSON.stringify(data.profile));
+      if(data.services)localStorage.setItem('customServices',JSON.stringify(data.services));
+      if(data.orders)localStorage.setItem('demoOrders',JSON.stringify(data.orders));
+      if(data.refills)localStorage.setItem('demoRefills',JSON.stringify(data.refills));
+      if(data.favorites)localStorage.setItem('favoriteServices',JSON.stringify(data.favorites));
+      if(data.activity)localStorage.setItem('amarActivity',JSON.stringify(data.activity));
+      if(data.notifications)localStorage.setItem('amarNotifications',JSON.stringify(data.notifications));
+      showToast('Backup imported.');setTimeout(()=>location.reload(),500)
+    }catch(err){showToast('Invalid backup file.')}
+  });
+
+  const reset=document.getElementById('adminResetPreview');
+  if(reset) reset.addEventListener('click',()=>{
+    if(!confirm('Reset all local preview data for Amar Shop in this browser?'))return;
+    ['siteSettings','demoProfile','customServices','demoOrders','demoRefills','favoriteServices','amarActivity','amarNotifications','demoSession'].forEach(k=>localStorage.removeItem(k));
+    showToast('Preview data reset.');setTimeout(()=>location.reload(),500)
+  });
 });
