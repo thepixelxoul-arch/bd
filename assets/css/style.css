@@ -494,3 +494,55 @@ textarea.form-control{resize:vertical;line-height:1.5}
   .platform-icon{width:20px;height:20px}
   .platform-chevron{font-size:20px}
 }
+
+.linkedin-mark{
+  width:24px;height:24px;border-radius:5px;
+  display:grid;place-items:center;
+  background:#0A66C2;color:#fff;
+  font-weight:900;font-size:14px;
+  font-family:Arial,sans-serif;
+  line-height:1;
+}
+
+/* Phone platform grid: logos only */
+@media(max-width:600px){
+  .platform-card{padding:13px}
+  .platforms{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:9px;
+  }
+  .platform{
+    min-height:62px;
+    padding:8px;
+    justify-content:center;
+    border-radius:14px;
+  }
+  .platform-icon-wrap{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    border-radius:12px;
+  }
+  .platform-icon{width:25px;height:25px}
+  .platform-emoji{font-size:24px}
+  .linkedin-mark{width:27px;height:27px;font-size:15px}
+  .platform-label{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    padding:0!important;
+    margin:-1px!important;
+    overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;
+    border:0!important;
+  }
+  .platform-chevron{display:none}
+  .platform.active{
+    transform:none;
+    box-shadow:0 8px 20px rgba(248,86,6,.22);
+  }
+}
+@media(max-width:360px){
+  .platforms{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
