@@ -157,3 +157,118 @@ document.addEventListener('DOMContentLoaded',()=>{
  const adminProduct=document.getElementById('adminProductForm');if(adminProduct)adminProduct.onsubmit=e=>{e.preventDefault();const fd=new FormData(adminProduct),list=customProducts();list.unshift({id:Number(Date.now().toString().slice(-8)),name:fd.get('name'),cat:fd.get('cat'),price:Number(fd.get('price')),old:Number(fd.get('old')||0),rating:5,sold:0,stock:Number(fd.get('stock')),emoji:fd.get('emoji')||'📦',seller:fd.get('seller')||store().name,tag:fd.get('tag')||'New',desc:fd.get('desc')||'Marketplace product',custom:true});save('shopProducts',list);toast('Product added');adminProduct.reset();renderAdmin()};
  const path=location.pathname.split('/').pop()||'index.html',s=store();if(s.maintenance&&!['admin.html','login.html'].includes(path)){const n=document.createElement('div');n.className='notice';n.textContent='Store maintenance is enabled. Shopping features may be temporarily limited.';document.querySelector('.page')?.prepend(n)}
 });
+// Amar Shop Advanced Marketplace v4
+const COUPONS={
+  AMAR100:{type:'fixed',value:100,min:1000,label:'৳100 off on ৳1,000+'},
+  SAVE10:{type:'percent',value:10,max:500,min:2000,label:'10% off up to ৳500'},
+  FREESHIP:{type:'shipping',value:0,min:500,label:'Free shipping on ৳500+'}
+};
+function activeCoupon(){return parse('shopCoupon',null)}
+function couponValue(subtotal){
+  const c=activeCoupon();if(!c||!COUPONS[c])return 0;
+  const rule=COUPONS[c];if(subtotal<rule.min)return 0;
+  if(rule.type==='fixed')return Math.min(rule.value,subtotal);
+  if(rule.type==='percent')return Math.min(rule.max||Infinity,subtotal*rule.value/100);
+  return 0
+}
+function shippingCost(subtotal){
+  if(!subtotal)return 0;
+  const c=activeCoupon(),rule=c&&COUPONS[c];
+  if(rule&&rule.type==='shipping'&&subtotal>=rule.min)return 0;
+  return subtotal>=store().freeShipping?0:80
+}
+function totalAfterDiscount(){
+  const subtotal=cartTotal(),discount=couponValue(subtotal),shipping=shippingCost(subtotal);
+  return Math.max(0,subtotal-discount)+shipping
+}
+function applyCoupon(code){
+  code=String(code||'').trim().toUpperCase();
+  const rule=COUPONS[code],subtotal=cartTotal();
+  if(!rule){toast('Coupon code not found');return false}
+  if(subtotal<rule.min){toast('Minimum order '+money(rule.min)+' required');return false}
+  save('shopCoupon',code);toast('Coupon applied: '+code);renderCartSummary();return true
+}
+function renderCartSummary(){
+  const subtotal=cartTotal(),discount=couponValue(subtotal),shipping=shippingCost(subtotal),total=Math.max(0,subtotal-discount)+shipping,s=store();
+  document.querySelectorAll('[data-subtotal]').forEach(e=>e.textContent=money(subtotal));
+  document.querySelectorAll('[data-shipping]').forEach(e=>e.textContent=shipping?money(shipping):'FREE');
+  document.querySelectorAll('[data-discount]').forEach(e=>{e.textContent=discount?'-'+money(discount):money(0);e.closest('.summary-row')?.classList.toggle('discount-row',discount>0)});
+  document.querySelectorAll('[data-cart-total]').forEach(e=>e.textContent=money(total));
+  document.querySelectorAll('[data-coupon-code]').forEach(e=>e.value=activeCoupon()||'');
+  document.querySelectorAll('[data-coupon-status]').forEach(e=>e.textContent=activeCoupon()?(COUPONS[activeCoupon()]?.label||'Coupon applied'):'');
+  const remaining=Math.max(0,Number(s.freeShipping||1500)-subtotal),pct=Math.min(100,(subtotal/Math.max(1,Number(s.freeShipping||1500)))*100);
+  document.querySelectorAll('[data-shipping-progress]').forEach(box=>{
+    const msg=box.querySelector('[data-shipping-message]'),bar=box.querySelector('.shipping-bar span');
+    if(msg)msg.textContent=remaining?('Add '+money(remaining)+' more for free shipping'):'You unlocked free shipping';
+    if(bar)bar.style.width=pct+'%';
+  })
+}
+function checkoutInit(){
+  const form=document.getElementById('checkoutForm');if(!form)return;
+  if(store().maintenance){form.querySelector('button[type="submit"],button:not([type])')?.setAttribute('disabled','disabled');toast('Store maintenance mode is active')}
+  const p=profile();const map={coName:p.name||'',coPhone:p.phone||'',coEmail:p.email||'',coAddress:p.address||'',coCity:p.city||''};
+  Object.entries(map).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v});
+  renderCartSummary();
+  const summary=document.getElementById('checkoutItems');
+  if(summary)summary.innerHTML=cart().map(i=>{const pr=getProduct(i.id);return '<div class="summary-row"><span>'+esc(pr?.name||'Product')+' × '+i.qty+'</span><b>'+money((pr?.price||0)*i.qty)+'</b></div>'}).join('');
+  form.onsubmit=e=>{
+    e.preventDefault();if(!cart().length){toast('Cart is empty');return}
+    const fd=new FormData(form),customer={name:fd.get('name'),phone:fd.get('phone'),email:fd.get('email'),address:fd.get('address'),city:fd.get('city')},payment=fd.get('payment');
+    const subtotal=cartTotal(),discount=couponValue(subtotal),shipping=shippingCost(subtotal),coupon=activeCoupon();
+    const os=orders();os.unshift({id:Date.now().toString().slice(-9),created:new Date().toLocaleString(),status:'Processing',customer,payment,items:cart(),subtotal,discount,shipping,coupon,total:Math.max(0,subtotal-discount)+shipping});
+    save('shopOrders',os);save('shopProfile',{...profile(),...customer});save('shopCart',[]);localStorage.removeItem('shopCoupon');location.href='order-success.html?id='+os[0].id
+  }
+}
+function saveRecentlyViewed(id){
+  const p=getProduct(id);if(!p)return;
+  let list=parse('recentlyViewed',[]).map(String).filter(x=>x!==String(id));list.unshift(String(id));save('recentlyViewed',list.slice(0,12))
+}
+function recentProducts(){return parse('recentlyViewed',[]).map(id=>getProduct(id)).filter(Boolean)}
+function renderRecent(){
+  document.querySelectorAll('[data-recent-products]').forEach(box=>{
+    const list=recentProducts();
+    box.innerHTML=list.length?list.slice(0,6).map(p=>'<a class="recent-card" href="product.html?id='+p.id+'"><div class="r-visual">'+esc(p.emoji)+'</div><b>'+esc(p.name)+'</b><small>'+money(p.price)+'</small></a>').join(''):'<div class="empty" style="grid-column:1/-1;padding:20px">Products you view will appear here.</div>'
+  })
+}
+function setupSearchSuggestions(){
+  const form=document.getElementById('globalSearch');if(!form)return;
+  const input=form.querySelector('input');if(!input)return;
+  let box=form.querySelector('.search-suggest');if(!box){box=document.createElement('div');box.className='search-suggest';form.appendChild(box)}
+  function draw(){
+    const q=input.value.trim().toLowerCase();
+    if(!q){box.classList.remove('show');box.innerHTML='';return}
+    const ps=products().filter(p=>[p.name,p.cat,p.seller].join(' ').toLowerCase().includes(q)).slice(0,6);
+    const cs=CATEGORIES.filter(c=>c.name.toLowerCase().includes(q)).slice(0,2);
+    const items=[
+      ...cs.map(c=>({href:'shop.html?cat='+c.id,icon:c.icon,title:c.name,sub:'Category'})),
+      ...ps.map(p=>({href:'product.html?id='+p.id,icon:p.emoji,title:p.name,sub:money(p.price)+' • '+p.seller}))
+    ];
+    box.innerHTML=items.length?items.map(x=>'<a class="suggest-item" href="'+x.href+'"><span class="suggest-icon">'+esc(x.icon)+'</span><span class="suggest-copy"><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></span></a>').join(''):'<div class="suggest-item"><span class="suggest-icon">⌕</span><span class="suggest-copy"><b>No instant matches</b><small>Press Search to see results</small></span></div>';
+    box.classList.add('show')
+  }
+  input.addEventListener('input',draw);input.addEventListener('focus',draw);
+  document.addEventListener('click',e=>{if(!form.contains(e.target))box.classList.remove('show')})
+}
+function setupDynamicTimer(){
+  document.querySelectorAll('.timer').forEach(t=>{
+    const spans=t.querySelectorAll('span');if(spans.length<3)return;
+    const update=()=>{const now=new Date(),end=new Date(now);end.setHours(23,59,59,999);let sec=Math.max(0,Math.floor((end-now)/1000));const h=Math.floor(sec/3600);sec%=3600;const m=Math.floor(sec/60),s=sec%60;spans[0].textContent=String(h).padStart(2,'0');spans[1].textContent=String(m).padStart(2,'0');spans[2].textContent=String(s).padStart(2,'0')};update();setInterval(update,1000)
+  })
+}
+function setupAdvancedProduct(){
+  const id=new URLSearchParams(location.search).get('id'),p=getProduct(id);if(!p)return;
+  saveRecentlyViewed(p.id);renderRecent();
+  const bar=document.querySelector('.product-mobile-bar');if(bar){
+    bar.querySelector('[data-mobile-cart]')?.addEventListener('click',()=>addCart(p.id,Number(document.getElementById('detailQty')?.value||1)));
+    bar.querySelector('[data-mobile-buy]')?.addEventListener('click',()=>{addCart(p.id,Number(document.getElementById('detailQty')?.value||1));location.href='checkout.html'})
+  }
+}
+document.addEventListener('click',e=>{
+  const copy=e.target.closest('[data-copy-voucher]');if(copy){navigator.clipboard?.writeText(copy.dataset.copyVoucher).catch(()=>{});toast('Voucher copied: '+copy.dataset.copyVoucher)}
+  const apply=e.target.closest('[data-apply-coupon]');if(apply){const root=apply.closest('.summary-card')||document;const input=root.querySelector('[data-coupon-code]');applyCoupon(input?.value||'')}
+  const remove=e.target.closest('[data-remove-coupon]');if(remove){localStorage.removeItem('shopCoupon');toast('Coupon removed');renderCartSummary()}
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  setupSearchSuggestions();setupDynamicTimer();renderRecent();setupAdvancedProduct();renderCartSummary();
+  document.querySelectorAll('[data-coupon-code]').forEach(input=>input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCoupon(input.value)}}))
+});
