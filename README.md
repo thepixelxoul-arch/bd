@@ -1,41 +1,51 @@
-# Amar Shop
+# Amar Shop Marketplace
 
-A large responsive social-service marketplace/dashboard frontend built for GitHub Pages.
+Amar Shop is now an original multi-category e-commerce marketplace frontend inspired by modern South Asian shopping apps, not an SMM panel.
 
-## Main areas
+## Shopping features
 
-- Dashboard
-- New Order / Mass Order
-- Orders and Recently Completed
-- Services and Discover marketplace
-- Favorites
-- Wallet and Transactions
-- Refill
-- Affiliates
-- Child Panels
-- Support and Help Center
-- Notifications and Activity
-- API documentation
-- Account and Security
-- System Status
-- About / Contact / FAQ
-- Terms / Privacy
-- Admin Control Center
+- Home storefront with hero promotions and flash deals
+- 12 product categories
+- Product search, category filters and sorting
+- Product detail pages
+- Wishlist
+- Shopping cart with quantities
+- Checkout flow
+- Cash on Delivery / bKash / Nagad UI
+- Local preview orders and order tracking
+- Customer account and delivery address
+- Seller Center and product listing preview
+- Marketplace seller page
+- Deals page
+- Help, About, Contact, Terms and Privacy
+- Responsive phone/tablet/desktop design
+- Mobile bottom navigation
 
-## Admin preview controls
+## Admin preview
 
-The static Admin Control Center can manage local preview settings such as site name, announcements, order/registration availability, maintenance mode, customer balance, custom services, order status, favorites/activity metrics, and JSON backup import/export.
+The ecommerce Admin page includes:
+- Store name and announcement
+- Support contact settings
+- Free-shipping threshold
+- Maintenance mode
+- Product creation
+- Custom product deletion
+- Product inventory display
+- Order list and order status updates
+- Revenue/order/product summary
 
-## Responsive UI
+## Important production note
 
-The site is designed for desktop, tablet and phone. Phones include app-style bottom navigation and compact platform-logo selection.
+This repository is hosted on GitHub Pages, so it is a static frontend preview. Cart, wishlist, profile, listings and orders are currently stored with browser localStorage.
 
-## Production note
+For a real multi-user marketplace, connect:
+- secure authentication
+- database
+- server-side product and inventory management
+- real seller accounts and permissions
+- verified bKash/Nagad/payment gateway
+- delivery/courier integrations
+- server-side order processing
+- protected admin dashboard
 
-GitHub Pages is static hosting. The current account data, orders, settings and admin controls use browser localStorage for preview/demo behavior. Real multi-user login, central database, payments, secure admin permissions, provider API keys, webhooks and order processing require a server-side backend or secure serverless functions.
-
-## GitHub Pages
-
-Repository: `thepixelxoul-arch/bd`
-
-The site includes `404.html`, `robots.txt`, `sitemap.xml`, `manifest.webmanifest`, `favicon.svg`, and `.nojekyll`.
+Legacy SMM-panel pages were removed during the ecommerce rebuild.
