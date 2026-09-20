@@ -123,3 +123,136 @@ document.addEventListener('DOMContentLoaded',()=>{
   syncThemeLabel();
   if(theme)theme.addEventListener('click',()=>setTimeout(syncThemeLabel,0));
 });
+// Amar Shop mobile bottom nav + admin tools
+document.addEventListener('DOMContentLoaded',()=>{
+  const path=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  const side=document.querySelector('.sidebar');
+  const sideNav=document.querySelector('.sidebar .nav');
+
+  // Add Admin Panel link to the sidebar on every dashboard page.
+  if(sideNav && !sideNav.querySelector('a[href="admin.html"]')){
+    const sessionHeading=[...sideNav.querySelectorAll('.nav-section')].find(x=>x.textContent.trim().toLowerCase()==='session');
+    const adminLink=document.createElement('a');
+    adminLink.href='admin.html';
+    adminLink.textContent='Admin Panel';
+    if(path==='admin.html') adminLink.classList.add('active');
+    if(sessionHeading) sideNav.insertBefore(adminLink,sessionHeading);
+    else sideNav.appendChild(adminLink);
+  }
+
+  // Bottom navigation for phones.
+  if(document.querySelector('.content') && !document.querySelector('.mobile-bottom-nav')){
+    const bottom=document.createElement('nav');
+    bottom.className='mobile-bottom-nav';
+    const items=[
+      ['index.html','⌂','Home'],
+      ['orders.html','▤','Orders'],
+      ['services.html','★','Services'],
+      ['addfunds.html','৳','Funds']
+    ];
+    items.forEach(([href,ico,label])=>{
+      const a=document.createElement('a');
+      a.href=href;
+      a.innerHTML='<span class="nav-ico">'+ico+'</span><span>'+label+'</span>';
+      if(path===href) a.classList.add('active');
+      bottom.appendChild(a);
+    });
+    const more=document.createElement('button');
+    more.type='button';
+    more.innerHTML='<span class="nav-ico">☰</span><span>Menu</span>';
+    more.addEventListener('click',()=>{
+      if(!side)return;
+      side.classList.add('open');
+      document.body.classList.add('menu-open');
+      const backdrop=document.querySelector('.sidebar-backdrop');
+      if(backdrop) backdrop.classList.add('show');
+    });
+    bottom.appendChild(more);
+    document.body.appendChild(bottom);
+  }
+
+  // Admin dashboard values.
+  if(path==='admin.html'){
+    const p=getDemoProfile();
+    const orders=demoOrders();
+    const refills=JSON.parse(localStorage.getItem('demoRefills')||'[]');
+    const cost=orders.reduce((sum,o)=>sum+(parseFloat(String(o.charge||'').replace(/[^0-9.]/g,''))||0),0);
+    setText('adminUsers',p.username||p.email?1:0);
+    setText('adminOrders',orders.length);
+    setText('adminRevenue','৳'+cost.toFixed(2));
+    setText('adminPending',orders.filter(o=>o.status==='Pending').length);
+    setText('adminRefills',refills.length);
+    setText('adminUsername',p.username||'No demo user');
+    setText('adminEmail',p.email||'No email');
+    const bal=document.getElementById('adminBalance');
+    if(bal) bal.value=Number(p.balance??500).toFixed(2);
+
+    const tbody=document.getElementById('adminOrdersBody');
+    if(tbody){
+      tbody.innerHTML=orders.length?orders.map(o=>
+        '<tr><td>#'+o.id+'</td><td>'+o.service+'</td><td>'+o.qty+'</td><td>'+o.charge+'</td><td><span class="badge">'+o.status+'</span></td><td><div class="admin-actions">'+
+        (o.status==='Completed'?'':'<button class="btn btn-outline" data-admin-complete="'+o.id+'">Complete</button>')+
+        '<button class="btn btn-outline" data-admin-delete="'+o.id+'">Delete</button></div></td></tr>'
+      ).join(''):'<tr><td colspan="6"><div class="empty">No demo orders yet.</div></td></tr>';
+    }
+
+    const balanceForm=document.getElementById('adminBalanceForm');
+    if(balanceForm) balanceForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const profile=getDemoProfile();
+      profile.balance=Math.max(0,Number(document.getElementById('adminBalance').value||0));
+      setDemoProfile(profile);
+      showToast('Demo balance updated.');
+      setTimeout(()=>location.reload(),450);
+    });
+
+    const clearBtn=document.getElementById('adminClearOrders');
+    if(clearBtn) clearBtn.addEventListener('click',()=>{
+      if(confirm('Clear all demo orders from this browser?')){
+        localStorage.removeItem('demoOrders');
+        showToast('Demo orders cleared.');
+        setTimeout(()=>location.reload(),450);
+      }
+    });
+
+    const exportBtn=document.getElementById('adminExportData');
+    if(exportBtn) exportBtn.addEventListener('click',()=>{
+      const payload={
+        profile:getDemoProfile(),
+        orders:demoOrders(),
+        refills:JSON.parse(localStorage.getItem('demoRefills')||'[]'),
+        exportedAt:new Date().toISOString()
+      };
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='amar-shop-demo-data.json';
+      document.body.appendChild(a);a.click();a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Demo data exported.');
+    });
+  }
+});
+
+document.addEventListener('click',e=>{
+  const complete=e.target.closest('[data-admin-complete]');
+  if(complete){
+    const id=String(complete.dataset.adminComplete);
+    const orders=demoOrders();
+    const found=orders.find(o=>String(o.id)===id);
+    if(found){
+      found.status='Completed';
+      localStorage.setItem('demoOrders',JSON.stringify(orders));
+      showToast('Order completed.');
+      setTimeout(()=>location.reload(),350);
+    }
+  }
+  const del=e.target.closest('[data-admin-delete]');
+  if(del){
+    const id=String(del.dataset.adminDelete);
+    const orders=demoOrders().filter(o=>String(o.id)!==id);
+    localStorage.setItem('demoOrders',JSON.stringify(orders));
+    showToast('Order deleted.');
+    setTimeout(()=>location.reload(),350);
+  }
+});
