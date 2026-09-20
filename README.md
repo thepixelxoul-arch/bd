@@ -1,7 +1,41 @@
 # Amar Shop
 
-Original static SMM-panel style frontend for GitHub Pages.
+A large responsive social-service marketplace/dashboard frontend built for GitHub Pages.
 
-Included: New Order, Orders, Services, Add Funds, Support, Account, responsive sidebar, theme toggle and local demo orders.
+## Main areas
 
-This is frontend-only. Real login, database, payments, balances, admin functions and SMM APIs require a secure backend.
+- Dashboard
+- New Order / Mass Order
+- Orders and Recently Completed
+- Services and Discover marketplace
+- Favorites
+- Wallet and Transactions
+- Refill
+- Affiliates
+- Child Panels
+- Support and Help Center
+- Notifications and Activity
+- API documentation
+- Account and Security
+- System Status
+- About / Contact / FAQ
+- Terms / Privacy
+- Admin Control Center
+
+## Admin preview controls
+
+The static Admin Control Center can manage local preview settings such as site name, announcements, order/registration availability, maintenance mode, customer balance, custom services, order status, favorites/activity metrics, and JSON backup import/export.
+
+## Responsive UI
+
+The site is designed for desktop, tablet and phone. Phones include app-style bottom navigation and compact platform-logo selection.
+
+## Production note
+
+GitHub Pages is static hosting. The current account data, orders, settings and admin controls use browser localStorage for preview/demo behavior. Real multi-user login, central database, payments, secure admin permissions, provider API keys, webhooks and order processing require a server-side backend or secure serverless functions.
+
+## GitHub Pages
+
+Repository: `thepixelxoul-arch/bd`
+
+The site includes `404.html`, `robots.txt`, `sitemap.xml`, `manifest.webmanifest`, `favicon.svg`, and `.nojekyll`.
