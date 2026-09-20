@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f85606">
-<title>Admin Panel - Amar Shop</title>
+<meta name="description" content="Amar Shop administration and website control center">
+<title>Admin Control Center - Amar Shop</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,129 +13,95 @@
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar">
-    <div class="brand"><div class="brand-logo">AS</div><div>Amar Shop</div></div>
-    <div class="user-card">
-      <small>Admin workspace</small>
-      <div style="font-weight:800;margin-top:4px">Demo Admin</div>
-      <div class="balance">Control Panel</div>
-    </div>
-    <nav class="nav">
-      <div class="nav-section">Store</div>
-      <a href="index.html">New Order</a>
-      <a href="orders.html">Orders</a>
-      <a href="services.html">Services</a>
-      <a href="addfunds.html">Add Funds</a>
-      <a href="massorder.html">Mass Order</a>
-      <a href="tickets.html">Support</a>
-      <a href="refill.html">Refill</a>
-      <a href="affiliates.html">Affiliates</a>
-      <a href="child-panels.html">Child Panels</a>
-      <a href="api.html">API</a>
-      <a href="updates.html">Updates</a>
-      <a href="recently-completed.html">Recently Completed</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="account.html">Account</a>
-      <div class="nav-section">Management</div>
-      <a class="active" href="admin.html">Admin Panel</a>
-      <div class="nav-section">Session</div>
-      <a href="login.html">Login</a>
-      <a href="#" class="logout-link" data-logout>Logout</a>
-    </nav>
-  </aside>
+<aside class="sidebar">
+  <div class="brand"><div class="brand-logo">AS</div><div>Amar Shop</div></div>
+  <div class="user-card"><small>Administration</small><div style="font-weight:800;margin-top:4px">Control Center</div><div class="balance">Website Manager</div></div>
+  <nav class="nav">
+    <div class="nav-section">Website</div>
+    <a href="index.html">New Order</a><a href="orders.html">Orders</a><a href="services.html">Services</a>
+    <a href="addfunds.html">Add Funds</a><a href="massorder.html">Mass Order</a><a href="tickets.html">Support</a>
+    <a href="refill.html">Refill</a><a href="affiliates.html">Affiliates</a><a href="child-panels.html">Child Panels</a>
+    <a href="api.html">API</a><a href="updates.html">Updates</a><a href="recently-completed.html">Recently Completed</a>
+    <a href="dashboard.html">Dashboard</a><a href="account.html">Account</a>
+    <div class="nav-section">Management</div><a class="active" href="admin.html">Admin Control</a>
+    <div class="nav-section">Session</div><a href="login.html">Login</a><a href="#" class="logout-link" data-logout>Logout</a>
+  </nav>
+</aside>
 
-  <div class="content">
-    <header class="header">
-      <div><button class="btn btn-outline mobile-toggle" data-menu-toggle>☰</button></div>
-      <div class="header-actions">
-        <button class="btn btn-outline" data-theme-toggle>Theme</button>
-        <a class="btn btn-primary" href="index.html">View Shop</a>
-      </div>
-    </header>
+<div class="content">
+<header class="header">
+  <div><button class="btn btn-outline mobile-toggle" data-menu-toggle>☰</button></div>
+  <div class="header-actions"><span class="official-chip">● Control Center</span><a class="btn btn-primary" href="index.html">View Website</a></div>
+</header>
 
-    <main class="page">
-      <h1 class="page-title">Admin Panel</h1>
-      <p class="page-subtitle">Manage the browser-local Amar Shop demo from one place.</p>
+<main class="page">
+  <h1 class="page-title">Admin Control Center</h1>
+  <p class="page-subtitle">Manage website settings, services, customers and orders from one dashboard.</p>
 
-      <div class="admin-login-note">
-        This is a frontend demo admin panel. GitHub Pages cannot securely protect an admin page or secret API keys. Real admin login, database access and payment controls need a backend.
-      </div>
+  <div class="admin-login-note">Current GitHub Pages version stores settings in this browser. A secure backend is required before this can control all visitors, real accounts, payments or private API keys.</div>
 
-      <div class="admin-grid" style="margin-top:16px">
-        <div class="card stat"><span>Demo Users</span><h3 id="adminUsers">0</h3></div>
-        <div class="card stat"><span>Total Orders</span><h3 id="adminOrders">0</h3></div>
-        <div class="card stat"><span>Total Revenue</span><h3 id="adminRevenue">৳0.00</h3></div>
-        <div class="card stat"><span>Pending Orders</span><h3 id="adminPending">0</h3></div>
-      </div>
-
-      <div class="grid two-col" style="margin-top:16px">
-        <section class="card">
-          <div class="admin-panel-title">
-            <h2>Demo User</h2>
-            <span class="pill">Local browser</span>
-          </div>
-          <div class="admin-list">
-            <div class="admin-row">
-              <div class="meta"><small>Username</small><b id="adminUsername">No demo user</b></div>
-            </div>
-            <div class="admin-row">
-              <div class="meta"><small>Email</small><b id="adminEmail">No email</b></div>
-            </div>
-            <div class="admin-row">
-              <div class="meta"><small>Refill Requests</small><b id="adminRefills">0</b></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="admin-panel-title"><h2>Balance Control</h2></div>
-          <form id="adminBalanceForm">
-            <div class="form-group">
-              <label>Demo Balance (BDT)</label>
-              <input id="adminBalance" class="form-control" type="number" min="0" step="0.01" value="500">
-            </div>
-            <button class="btn btn-primary" style="width:100%">Update Demo Balance</button>
-          </form>
-        </section>
-      </div>
-
-      <section class="card" style="margin-top:16px">
-        <div class="admin-panel-title">
-          <h2>Order Management</h2>
-          <div class="admin-actions">
-            <button id="adminExportData" class="btn btn-outline">Export Data</button>
-            <button id="adminClearOrders" class="btn btn-outline">Clear Demo Orders</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr><th>ID</th><th>Service</th><th>Qty</th><th>Charge</th><th>Status</th><th>Action</th></tr>
-            </thead>
-            <tbody id="adminOrdersBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <div class="grid three-col" style="margin-top:16px">
-        <section class="card">
-          <h2 style="margin-top:0">Services</h2>
-          <p class="muted">Manage your demo service catalog and pricing structure.</p>
-          <a class="btn btn-primary" href="services.html">Open Services</a>
-        </section>
-        <section class="card">
-          <h2 style="margin-top:0">Support</h2>
-          <p class="muted">Review the support area and prepare a real ticket workflow later.</p>
-          <a class="btn btn-primary" href="tickets.html">Open Support</a>
-        </section>
-        <section class="card">
-          <h2 style="margin-top:0">System</h2>
-          <p class="muted">API, payments and secure admin access will require a backend.</p>
-          <a class="btn btn-primary" href="api.html">API Setup</a>
-        </section>
-      </div>
-    </main>
+  <div class="admin-grid" style="margin-top:16px">
+    <div class="card stat"><span>Customers</span><h3 id="adminUsers">0</h3></div>
+    <div class="card stat"><span>Total Orders</span><h3 id="adminOrders">0</h3></div>
+    <div class="card stat"><span>Total Order Value</span><h3 id="adminRevenue">৳0.00</h3></div>
+    <div class="card stat"><span>Pending Orders</span><h3 id="adminPending">0</h3></div>
   </div>
+
+  <section class="card" style="margin-top:16px">
+    <div class="admin-panel-title"><h2>Website Settings</h2><span class="pill">Main controls</span></div>
+    <form id="siteSettingsForm">
+      <div class="settings-grid">
+        <div class="form-group"><label>Website Name</label><input id="siteName" class="form-control" placeholder="Amar Shop"></div>
+        <div class="form-group"><label>Default New Account Balance</label><input id="siteDefaultBalance" class="form-control" type="number" min="0" step="0.01"></div>
+        <div class="form-group"><label>Support Email</label><input id="siteSupportEmail" class="form-control" type="email" placeholder="support@example.com"></div>
+        <div class="form-group"><label>Support Telegram</label><input id="siteSupportTelegram" class="form-control" placeholder="@amarshop"></div>
+      </div>
+      <div class="form-group"><label>Website Announcement</label><textarea id="siteAnnouncement" class="form-control" rows="3" placeholder="Write an announcement for customers"></textarea></div>
+      <div class="toggle-row"><div><b>Accept New Orders</b><div class="mini-note">Turn the New Order and Mass Order submission on or off.</div></div><label class="switch"><input id="siteOrdersEnabled" type="checkbox"><span class="slider"></span></label></div>
+      <div class="toggle-row"><div><b>Allow Registration</b><div class="mini-note">Turn new account registration on or off.</div></div><label class="switch"><input id="siteRegistrationEnabled" type="checkbox"><span class="slider"></span></label></div>
+      <button class="btn btn-primary" style="margin-top:14px">Save Website Settings</button>
+    </form>
+  </section>
+
+  <div class="grid two-col" style="margin-top:16px">
+    <section class="card">
+      <div class="admin-panel-title"><h2>Customer Account</h2><span class="pill">Account control</span></div>
+      <div class="admin-list">
+        <div class="admin-row"><div class="meta"><small>Username</small><b id="adminUsername">No customer</b></div></div>
+        <div class="admin-row"><div class="meta"><small>Email</small><b id="adminEmail">No email</b></div></div>
+        <div class="admin-row"><div class="meta"><small>Refill Requests</small><b id="adminRefills">0</b></div></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="admin-panel-title"><h2>Balance Control</h2></div>
+      <form id="adminBalanceForm">
+        <div class="form-group"><label>Customer Balance (BDT)</label><input id="adminBalance" class="form-control" type="number" min="0" step="0.01"></div>
+        <button class="btn btn-primary" style="width:100%">Update Balance</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px">
+    <div class="admin-panel-title"><h2>Add Custom Service</h2><span class="pill">Service manager</span></div>
+    <form id="adminServiceForm" class="admin-service-form">
+      <div class="form-group"><label>Service ID</label><input id="adminServiceId" class="form-control" type="number" min="1" required></div>
+      <div class="form-group"><label>Platform</label><select id="adminServicePlatform" class="form-control"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></div>
+      <div class="form-group"><label>Rate / 1000</label><input id="adminServiceRate" class="form-control" type="number" min="0" step="0.01" required></div>
+      <div class="form-group wide"><label>Service Name</label><input id="adminServiceName" class="form-control" required></div>
+      <div class="form-group"><label>Minimum</label><input id="adminServiceMin" class="form-control" type="number" min="1" required></div>
+      <div class="form-group"><label>Maximum</label><input id="adminServiceMax" class="form-control" type="number" min="1" required></div>
+      <div class="form-group full"><label>Description</label><textarea id="adminServiceDesc" class="form-control" rows="2"></textarea></div>
+      <div class="full"><button class="btn btn-primary">Add Service</button></div>
+    </form>
+    <div id="adminServiceList" class="admin-list" style="margin-top:16px"></div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <div class="admin-panel-title"><h2>Order Management</h2><div class="admin-actions"><button id="adminExportData" class="btn btn-outline">Export Data</button><button id="adminClearOrders" class="btn btn-outline">Clear Orders</button></div></div>
+    <div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Service</th><th>Qty</th><th>Charge</th><th>Status</th><th>Action</th></tr></thead><tbody id="adminOrdersBody"></tbody></table></div>
+  </section>
+</main>
+</div>
 </div>
 <script src="assets/js/app.js"></script>
 </body>
