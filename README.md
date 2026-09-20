@@ -1,4 +1,4 @@
-# SocialPanel
+# Amar Shop
 
 Original static SMM-panel style frontend for GitHub Pages.
 
